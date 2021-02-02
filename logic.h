@@ -19,6 +19,7 @@ class Logic : public QObject {
   Q_INVOKABLE void HandlePress(Vertice clicked);
   Q_INVOKABLE void HandleRelease(uint8_t id);
   Q_INVOKABLE void HandleDelete(uint8_t id);
+  Q_INVOKABLE void NewVertice(Vertice clicked);
 
  private:
   std::vector<Vertice*> adjacency_list_;

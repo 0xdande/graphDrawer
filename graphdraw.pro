@@ -16,6 +16,7 @@ SOURCES += \
         geometry.cpp \
         logic.cpp \
         main.cpp \
+        vertex.cpp \
         vertice.cpp
 
 RESOURCES += qml.qrc
@@ -34,6 +35,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     geometry.h \
     logic.h \
+    vertex.h \
     vertice.h
 
 

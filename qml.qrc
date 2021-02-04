@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>MessageDialog.qml</file>
+        <file>canvas.qml</file>
     </qresource>
 </RCC>

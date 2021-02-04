@@ -1,7 +1,6 @@
 #ifndef VERTICE_H
 #define VERTICE_H
 #include <cstdint>
-
 class Vertice {
  public:
   Vertice(uint8_t x, uint8_t y) : x_(x), y_(y) {}

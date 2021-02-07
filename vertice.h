@@ -3,6 +3,7 @@
 #include <cstdint>
 class Vertice {
  public:
+  Vertice() : x_(0), y_(0) {}
   Vertice(uint8_t x, uint8_t y) : x_(x), y_(y) {}
   uint8_t x();
   uint8_t y();

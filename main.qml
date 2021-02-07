@@ -68,6 +68,8 @@ ApplicationWindow {
                 console.log("Parasha")
                 logic.HandleClick(mouse.x, mouse.y)
                 drawCircle(mouse.x, mouse.y)
+                logic.NewVertice(mouse.x, mouse.y)
+                graph.requestPaint()
             }
             onReleased: {
                 logic.HandleRelease(mouse.x, mouse.y)
@@ -78,24 +80,20 @@ ApplicationWindow {
             function drawCircle(x, y) {
                 var ctx = graph.getContext("2d")
                 ctx.clearRect(0, 0, width, height)
-                ctx.strokeStyle = "white"
+                ctx.strokeStyle = "black"
                 ctx.lineWidth = parent.size / 20
                 ctx.beginPath()
                 var startAngle = Math.PI / 5 * 3
-                var endAngle = startAngle + control.progress * Math.PI / 5 * 9
-                ctx.arc(width / 2, height / 2,
-                        width / 2 - ctx.lineWidth / 2 - 2, startAngle, endAngle)
+                var endAngle = startAngle + 10 * Math.PI / 5 * 9
+                ctx.arc(x, y, width / 2 - ctx.lineWidth / 2 - 2,
+                        startAngle, endAngle)
                 ctx.stroke()
+                graph.requestPaint()
             }
         }
 
         onPaint: {
             console.log("buba")
-            //            var ccc = getContext("2d")
-            //            ccc.fillStyle = Qt.rgba(Math.random(), Math.random(),
-            //                                    Math.random(), 1)
-            //            ccc.fillRect(0, 0, width, height)
-            //            console.log("Panos")
         }
         TapHandler {
             id: handler

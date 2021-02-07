@@ -32,9 +32,7 @@ class Logic : public QObject {
   std::vector<std::pair<Vertex*, Vertex*>> selected_edges_;
   uint8_t vertice_radius_;
   uint8_t last_hold = 0;
-
- public:
-  QObject* canvas;
+  uint8_t holded_id = 0;
 };
 
 #endif  // LOGIC_H

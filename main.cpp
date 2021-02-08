@@ -3,6 +3,7 @@
 #include <QQmlComponent>
 #include <QQuickItem>
 #include <QtQml/QQmlApplicationEngine>
+
 #include "logic.h"
 int main(int argc, char* argv[]) {
   QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -15,9 +16,8 @@ int main(int argc, char* argv[]) {
   auto a = engine.findChild<QObject*>("window")->findChild<QObject*>("graph");
   //  qDebug() << a->property("width");
   Logic logic;
-  logic.canvas = a;
-  QMetaObject::invokeMethod(logic.canvas, "drawCircle", Q_ARG(int, 10),
-                            Q_ARG(int, 10));
+  //  QMetaObject::invokeMethod(logic.canvas, "drawCircle", Q_ARG(int, 10),
+  //                            Q_ARG(int, 10));
   /*qDebug() << engine.rootObjects();
   QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/canvas.qml")));
   if (component.isError()) {

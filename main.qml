@@ -65,10 +65,10 @@ ApplicationWindow {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton
             onClicked: {
+
                 console.log("Parasha")
                 logic.HandleClick(mouse.x, mouse.y)
                 drawCircle(mouse.x, mouse.y)
-                logic.NewVertice(mouse.x, mouse.y)
                 graph.requestPaint()
             }
             onReleased: {
@@ -93,6 +93,7 @@ ApplicationWindow {
         }
 
         onPaint: {
+            console.log(logic.adjacency_list.length)
             console.log("buba")
         }
         TapHandler {

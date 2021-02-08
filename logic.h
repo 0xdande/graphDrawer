@@ -3,6 +3,7 @@
 
 #include <QtQml/qqml.h>
 #include <QtQml/qqmlapplicationengine.h>
+
 #include <QObject>
 #include <QQmlComponent>
 #include <QString>
@@ -10,21 +11,25 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 #include "vertex.h"
 #include "vertice.h"
 class Logic : public QObject {
   Q_OBJECT
-  //      userNameChanged)
+  Q_PROPERTY(std::vector<Vertex*> adjacency_list_ READ adjacency_list WRITE
+                 SetAdjacencyList)
   QML_ELEMENT
  public:
   Logic();
  public slots:
   Q_INVOKABLE void HandleClick(int a, int b);
-  Q_INVOKABLE void HandleRelease(int a, int b);
+  Q_INVOKABLE void HandleRelease();
   Q_INVOKABLE void HandleHold(int a, int b);
   Q_INVOKABLE void HandleDelete();
   Q_INVOKABLE Vertice NewVertice(uint8_t x, uint8_t y);
   Q_INVOKABLE bool HandlingSubfunc(Vertice clicked);
+  std::vector<Vertex*> adjacency_list() { return adjacency_list_; }
+  void SetAdjacencyList(std::vector<Vertex*> v) { adjacency_list_ = v; }
 
  private:
   std::vector<Vertex*> adjacency_list_;

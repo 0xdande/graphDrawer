@@ -2,12 +2,13 @@
 #include <QGuiApplication>
 #include <QQmlComponent>
 #include <QQuickItem>
+#include <QVector4D>
 #include <QtQml/QQmlApplicationEngine>
 
 #include "logic.h"
 int main(int argc, char* argv[]) {
   QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-
+  qRegisterMetaType<std::vector<QVector4D>>();
   QGuiApplication app(argc, argv);
 
   QQmlApplicationEngine engine;

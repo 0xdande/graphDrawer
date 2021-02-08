@@ -4,16 +4,16 @@
 class Vertice {
  public:
   Vertice() : x_(0), y_(0) {}
-  Vertice(uint8_t x, uint8_t y) : x_(x), y_(y) {}
-  uint8_t x();
-  uint8_t y();
+  Vertice(int x, int y) : x_(x), y_(y) {}
+  int x();
+  int y();
 
-  void SetX(uint8_t&& x);
-  void SetY(uint8_t&& y);
+  void SetX(int&& x);
+  void SetY(int&& y);
 
  private:
-  uint8_t x_;
-  uint8_t y_;
+  int x_;
+  int y_;
 };
 
 #endif  // VERTICE_H

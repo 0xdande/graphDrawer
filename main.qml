@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import QtQuick.Dialogs 1.3
 import QtQuick.Window 2.2
 import QtQuick.Controls 2.15
 import io.qt.graphdraw.logic 1.0
@@ -14,14 +15,35 @@ ApplicationWindow {
         id: logic
     }
 
+    FileDialog {
+        id: dg
+        title: qsTr("File name")
+        onAccepted: {
+            var path = dg.fileUrl.toString()
+            // remove prefixed "file:///"
+            path = path.replace(/^(file:\/{3})/, "")
+            // unescape html codes like '%23' for '#'
+            let cleanPath = '/' + decodeURIComponent(path)
+            logic.Deserialize(cleanPath)
+            graph.requestPaint()
+            console.log(cleanPath)
+        }
+        //        Component.onCompleted: visible = true
+    }
+
     menuBar: MenuBar {
         Menu {
             title: qsTr("&File")
             Action {
                 text: qsTr("&Export to file")
+                onTriggered: logic.Serialize("gavno.graph")
             }
             Action {
                 text: qsTr("&Load from file")
+                onTriggered: {
+                    dg.open()
+                    console.log("Opened")
+                }
             }
             MenuSeparator {}
             Action {

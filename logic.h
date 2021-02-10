@@ -46,6 +46,9 @@ class Logic : public QObject {
   Q_INVOKABLE std::vector<QVector4D> DrawEdgesAPI();
 
   // Serialize; Deserialize
+  Q_INVOKABLE void Serialize(QString filepath);
+  Q_INVOKABLE void Deserialize(QString filepath);
+
  private:
   std::vector<Vertex*> adjacency_list_;
   std::vector<Vertex*> selected_;

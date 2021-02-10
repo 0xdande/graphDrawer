@@ -2,8 +2,9 @@
 
 #include <qdebug.h>
 
+#include <fstream>
 #include <iostream>
-
+#include <sstream>
 #include "geometry.h"
 Logic::Logic() {}
 
@@ -182,3 +183,92 @@ std::vector<QVector4D> Logic::DrawEdgesAPI() {
   }
   return to_draw;
 }
+
+void Logic::Serialize(QString filepath) {
+  if (adjacency_list_.size() == 0) {
+    return;
+  }
+  std::ofstream file;
+  file.open(filepath.toStdString());
+  file << adjacency_list_.size();
+  file << '{';
+  std::for_each(
+      adjacency_list_.begin(), adjacency_list_.end() - 1, [&](Vertex *el) {
+        file << '{' << el->id_ - 1 << ',' << '{' << el->vertice_.x() << ','
+             << el->vertice_.y() << '}' << ',' << '{';
+        std::for_each(el->connected_.begin(), el->connected_.end() - 1,
+                      [&](Vertex *el) { file << el->id() - 1 << ','; });
+        file << el->connected_[el->connected_.size() - 1]->id() - 1 << '}'
+             << '}' << ',';
+      });
+  auto el = adjacency_list_[adjacency_list_.size() - 1];
+  file << '{' << el->id_ - 1 << ',' << '{' << el->vertice_.x() << ','
+       << el->vertice_.y() << '}' << ',' << '{';
+  std::for_each(el->connected_.begin(), el->connected_.end() - 1,
+                [&](Vertex *el) { file << el->id() - 1 << ','; });
+  file << el->connected_[el->connected_.size() - 1]->id() - 1 << '}' << '}';
+  file.close();
+}
+void Logic::Deserialize(QString filepath) {
+  HandleDeleteAll();
+  std::ifstream file;
+  std::vector<std::vector<int>> constructed;
+  file.open(filepath.toStdString(), std::ios::in);
+  int cr;
+  file >> cr;
+  qDebug() << cr;
+  char ch;
+  file.ignore(1);
+  for (int i = 0; i < cr; i++) {
+    file.ignore(1);
+    int id;
+    file >> id;
+    qDebug() << id;
+    file.ignore(2);
+    int x, y;
+    file >> x;
+    file.ignore(1);
+    file >> y;
+    qDebug() << x << y;
+    file.ignore(2);
+    std::string bytes;
+    while (file.get(ch) && ch != '}') {
+      if (ch == '{') continue;
+      bytes += ch;
+    }
+    std::vector<int> adjacency;
+    if (bytes.size()) {
+      std::stringstream ss(bytes);
+
+      for (int i; ss >> i;) {
+        adjacency.push_back(i + 1);
+        if (ss.peek() == ',') ss.ignore();
+      }
+    }
+
+    auto to_push = new Vertex{
+        id + 1,
+        Vertice{x, y},
+        false,
+        std::vector<Vertex *>{},
+    };
+    file.ignore(2);
+    adjacency_list_.push_back(to_push);
+    constructed.push_back(adjacency);
+  }
+
+  for (int i = 0; i < constructed.size(); i++) {
+    for (int j = 0; j < constructed[i].size(); j++) {
+      adjacency_list_[i]->connected_.push_back(adjacency_list_[j]);
+    }
+  }
+  file.close();
+}
+
+/* 				Style of Serializing
+ * {{id,{x,y},is_active,{id.'s of connected}},{id,{x,y},is_active,
+ * {id.'s of connected}}...}
+ * 4{{0,{291,93},{1,2,3}},{1,{126,299},{2,0,3}},{2,{391,461},{3,1,0}},{3,{129,619},{2,1,0}}
+ *
+ *
+ */

@@ -8,44 +8,33 @@
 Logic::Logic() {}
 
 void Logic::HandleClick(int a, int b) {
-  qDebug() << "----Adjacency List Start----";
-  for (const auto &x : adjacency_list_) {
-    qDebug() << x->id() << x->vertice().x() << x->vertice().y();
-  }
-  qDebug() << "----Adjacency List End----";
   if (!last_hold) {
     auto clicked = NewVertice(a, b);
     if (HandlingSubfunc(clicked)) {
       return;
     }
     for (const auto &x : adjacency_list_) {
-      for (const auto &d : x->connected_) {
-        qDebug() << Geometry::DistanceToSegment(d.first->vertice(),
-                                                x->vertice(), clicked);
-        if (Geometry::DistanceToSegment(d.first->vertice(), x->vertice(),
-                                        clicked) <= 10) {
-          qDebug() << "Worked";
+      for (auto &d : x->connected_) {
+        if (Geometry::DistanceToSegment(d->vertice(), x->vertice(), clicked) <=
+            10) {
           if ((std::find(selected_edges_.begin(), selected_edges_.end(),
-                         std::pair<Vertex *, Vertex *>{d.first, x}) ==
+                         std::pair<Vertex *, Vertex *>{d, x}) ==
                selected_edges_.end()) &&
               (std::find(selected_edges_.begin(), selected_edges_.end(),
-                         std::pair<Vertex *, Vertex *>{x, d.first}) ==
+                         std::pair<Vertex *, Vertex *>{x, d}) ==
                selected_edges_.end())) {
-            selected_edges_.push_back({d.first, x});
-            selected_edges_.push_back({x, d.first});
-            auto res = std::find(d.first->connected_.begin(),
-                                 d.first->connected_.end(),
-                                 std::pair<Vertex *, bool>{x, true});
+            selected_edges_.push_back({d, x});
+            selected_edges_.push_back({x, d});
+          } else {
+            selected_edges_.erase(
+                std::find(selected_edges_.begin(), selected_edges_.end(),
+                          std::pair<Vertex *, Vertex *>{d, x}));
+            selected_edges_.erase(
+                std::find(selected_edges_.begin(), selected_edges_.end(),
+                          std::pair<Vertex *, Vertex *>{x, d}));
           }
-        } else {
-          selected_edges_.erase(
-              std::find(selected_edges_.begin(), selected_edges_.end(),
-                        std::pair<Vertex *, Vertex *>{d.first, x}));
-          selected_edges_.erase(
-              std::find(selected_edges_.begin(), selected_edges_.end(),
-                        std::pair<Vertex *, Vertex *>{x, d.first}));
+          return;
         }
-        return;
       }
     }
     auto a = new Vertex(adjacency_list_.size() + 1, clicked, false, {});
@@ -100,14 +89,22 @@ void Logic::HandleDelete() {
     for (const auto &t : adjacency_list_) {
       t->connected_.erase(
           std::remove_if(t->connected_.begin(), t->connected_.end(),
-                         [&](std::pair<Vertex *, bool> el) {
-                           return el.first->id() == d->id();
-                         }),
+                         [&](Vertex *el) { return el->id() == d->id(); }),
           t->connected_.end());
     }
   }
   for (const auto &x : selected_) x->SetActive(false);
   this->selected_.clear();
+}
+
+void Logic::HandleDeleteEdge() {
+  std::for_each(selected_edges_.begin(), selected_edges_.end(),
+                [](std::pair<Vertex *, Vertex *> el) {
+                  el.first->connected_.erase(
+                      std::find(el.first->connected_.begin(),
+                                el.first->connected_.end(), el.second));
+                });
+  selected_edges_.clear();
 }
 
 void Logic::HandleDeleteAll() {
@@ -142,14 +139,12 @@ bool Logic::HandleConnection() {
   } else {
     if ((std::find(selected_[0]->connected_.begin(),
                    selected_[0]->connected_.end(),
-                   std::pair<Vertex *, bool>{selected_[1], false}) ==
-         selected_[0]->connected_.end()) &&
-        (std::find(selected_[0]->connected_.begin(),
-                   selected_[0]->connected_.end(),
-                   std::pair<Vertex *, bool>{selected_[1], false}) ==
-         selected_[0]->connected_.end())) {
-      selected_[0]->connected_.push_back({selected_[1], false});
-      selected_[1]->connected_.push_back({selected_[0], false});
+                   selected_[1]) == selected_[0]->connected_.end()) &&
+        (std::find(selected_[1]->connected_.begin(),
+                   selected_[1]->connected_.end(),
+                   selected_[0]) == selected_[1]->connected_.end())) {
+      selected_[0]->connected_.push_back(selected_[1]);
+      selected_[1]->connected_.push_back(selected_[0]);
       for (const auto &x : selected_) x->SetActive(false);
       selected_.clear();
       return true;
@@ -174,9 +169,15 @@ std::vector<QVector4D> Logic::DrawEdgesAPI() {
   std::vector<QVector4D> to_draw;
   for (const auto &x : adjacency_list_) {
     for (const auto &y : x->connected()) {
-      to_draw.push_back(QVector4D{x->vertice().x(), x->vertice().y(),
-                                  y.first->vertice().x(),
-                                  y.first->vertice().y()});
+      if (std::find(selected_edges_.begin(), selected_edges_.end(),
+                    std::pair<Vertex *, Vertex *>{x, y}) !=
+          selected_edges_.end()) {
+        to_draw.push_back(QVector4D{-x->vertice().x(), -x->vertice().y(),
+                                    -y->vertice().x(), -y->vertice().y()});
+      } else {
+        to_draw.push_back(QVector4D{x->vertice().x(), x->vertice().y(),
+                                    y->vertice().x(), y->vertice().y()});
+      }
     }
   }
   return to_draw;

@@ -47,7 +47,7 @@ ApplicationWindow {
             Action {
                 text: qsTr("&About")
                 onTriggered: showMessageBox(
-                                 'Created by Artem Siryk!\n Press C to connect 2 selected Vertices\n Press D to delete Vertices\n')
+                                 'Created by Artem Siryk!\n Press C to connect 2 selected Vertices\n Press D to delete Vertices\nPress E to delete Edges')
             }
         }
     }
@@ -79,6 +79,10 @@ ApplicationWindow {
                     showMessageBox(
                                 "Can connect only 2 selected Vertices that are not connected!")
                 }
+            }
+            if (event.key == Qt.Key_E) {
+                logic.HandleDeleteEdge()
+                graph.requestPaint()
             }
         }
 
@@ -121,7 +125,15 @@ ApplicationWindow {
         function drawEdges(xfrom, yfrom, xto, yto) {
             var ctx = graph.getContext("2d")
             ctx.lineWidth = 3
-            ctx.strokeStyle = "red"
+            if (xfrom <= 0) {
+                ctx.strokeStyle = "#922B21"
+                xfrom = Math.abs(xfrom)
+                yfrom = Math.abs(yfrom)
+                xto = Math.abs(xto)
+                yto = Math.abs(yto)
+            } else {
+                ctx.strokeStyle = "#17A589"
+            }
             ctx.beginPath()
             ctx.moveTo(xfrom, yfrom)
             ctx.lineTo(xto, yto)

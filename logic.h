@@ -30,6 +30,7 @@ class Logic : public QObject {
   Q_INVOKABLE void HandleRelease();
   Q_INVOKABLE void HandleHold(int a, int b);
   Q_INVOKABLE void HandleDelete();
+  Q_INVOKABLE void HandleDeleteEdge();
   Q_INVOKABLE void HandleDeleteAll();
   Q_INVOKABLE bool HandleConnection();
   Q_INVOKABLE Vertice NewVertice(int x, int y);

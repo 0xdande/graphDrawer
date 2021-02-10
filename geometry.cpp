@@ -35,7 +35,6 @@ double Geometry::DistanceToSegment(Vertice begin_segment, Vertice end_segment,
                   (-2 * clb * segment_length);
 
   if (angle1 >= 0 && angle2 >= 0) {
-    qDebug() << "Distance to Line: ";
     return Geometry::DistanceToLine(
         clicked, Geometry::LineEquation(begin_segment, end_segment));
   }

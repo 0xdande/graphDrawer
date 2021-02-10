@@ -29,7 +29,6 @@ ApplicationWindow {
             graph.requestPaint()
             console.log(cleanPath)
         }
-        //        Component.onCompleted: visible = true
     }
     FileDialog {
         id: dg
@@ -53,7 +52,6 @@ ApplicationWindow {
             Action {
                 text: qsTr("&Export to file")
                 onTriggered: dg.open()
-                //                onTriggered: logic.Serialize("gavno.graph")
             }
             Action {
                 text: qsTr("&Load from file")

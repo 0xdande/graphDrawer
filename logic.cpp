@@ -216,20 +216,17 @@ void Logic::Deserialize(QString filepath) {
   file.open(filepath.toStdString(), std::ios::in);
   int cr;
   file >> cr;
-  qDebug() << cr;
   char ch;
   file.ignore(1);
   for (int i = 0; i < cr; i++) {
     file.ignore(1);
     int id;
     file >> id;
-    qDebug() << id;
     file.ignore(2);
     int x, y;
     file >> x;
     file.ignore(1);
     file >> y;
-    qDebug() << x << y;
     file.ignore(2);
     std::string bytes;
     while (file.get(ch) && ch != '}') {

@@ -16,8 +16,9 @@ ApplicationWindow {
     }
 
     FileDialog {
-        id: dg
-        title: qsTr("File name")
+        id: dgde
+        title: qsTr("Load from file")
+        selectExisting: false
         onAccepted: {
             var path = dg.fileUrl.toString()
             // remove prefixed "file:///"
@@ -30,18 +31,34 @@ ApplicationWindow {
         }
         //        Component.onCompleted: visible = true
     }
-
+    FileDialog {
+        id: dg
+        title: qsTr("Save as")
+        selectExisting: false
+        onAccepted: {
+            var path = dg.fileUrl.toString()
+            // remove prefixed "file:///"
+            path = path.replace(/^(file:\/{3})/, "")
+            // unescape html codes like '%23' for '#'
+            let cleanPath = '/' + decodeURIComponent(path)
+            logic.Serialize(cleanPath)
+            graph.requestPaint()
+            console.log(cleanPath)
+        }
+        //        Component.onCompleted: visible = true
+    }
     menuBar: MenuBar {
         Menu {
             title: qsTr("&File")
             Action {
                 text: qsTr("&Export to file")
-                onTriggered: logic.Serialize("gavno.graph")
+                onTriggered: dg.open()
+                //                onTriggered: logic.Serialize("gavno.graph")
             }
             Action {
                 text: qsTr("&Load from file")
                 onTriggered: {
-                    dg.open()
+                    dgde.open()
                     console.log("Opened")
                 }
             }

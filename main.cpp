@@ -13,9 +13,7 @@ int main(int argc, char *argv[]) {
 
   QQmlApplicationEngine engine;
   engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
-  if (engine.rootObjects().isEmpty())
-    return -1;
-  auto a = engine.findChild<QObject *>("window")->findChild<QObject *>("graph");
+  if (engine.rootObjects().isEmpty()) return -1;
   Logic logic;
   return app.exec();
 }

@@ -21,7 +21,7 @@ ApplicationWindow {
         title: qsTr("Load from file")
         selectExisting: false
         onAccepted: {
-            let path = dg.fileUrl.toString()
+            let path = dgde.fileUrl.toString()
             // remove prefixed "file:///"
             path = path.replace(/^(file:\/{3})/, "")
             // unescape html codes like '%23' for '#'
@@ -128,16 +128,11 @@ ApplicationWindow {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton
             onClicked: {
-                if (!isholded) {
-                    logic.HandleClick(mouse.x, mouse.y)
-                } else {
-                    isholded = false
-                }
+                logic.HandleClick(mouse.x, mouse.y)
 
                 graph.requestPaint()
             }
             onPressAndHold: {
-                console.log("holded")
                 isholded = true
             }
             onReleased: {
@@ -197,7 +192,6 @@ ApplicationWindow {
             let ctx = graph.getContext("2d")
             ctx.clearRect(0, 0, parent.width, parent.height)
             let to_draw_edges = logic.DrawEdgesAPI()
-            console.log("Died")
             to_draw_edges.forEach(function (element) {
                 drawEdges(element.x, element.y, element.z, element.w)
             })

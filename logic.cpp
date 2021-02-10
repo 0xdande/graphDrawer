@@ -42,13 +42,6 @@ void Logic::HandleClick(int a, int b) {
     this->adjacency_list_.push_back(a);
   }
 }
-void Logic::HandleRelease() {
-  if (last_hold == true) {
-    last_hold = false;
-    holded_id = -1;
-  }
-}
-
 bool Logic::HandlingSubfunc(Vertice clicked) {
   bool changed = false;
   for (const auto &vl : adjacency_list_) {
@@ -80,7 +73,6 @@ bool Logic::HandlingSubfunc(Vertice clicked) {
 void Logic::HandleDelete() {
   for (const auto &d : selected_) {
     adjacency_list_.erase(adjacency_list_.begin() + d->id() - 1);
-
     for (size_t i = d->id() - 1; i < adjacency_list_.size(); i++) {
       adjacency_list_[i]->id_--;
     }
@@ -93,17 +85,19 @@ void Logic::HandleDelete() {
                          [&](Vertex *el) { return el->id() == d->id(); }),
           t->connected_.end());
     }
+    delete d;
   }
-  for (const auto &x : selected_) x->SetActive(false);
   this->selected_.clear();
 }
 
 void Logic::HandleDeleteEdge() {
   std::for_each(selected_edges_.begin(), selected_edges_.end(),
                 [](std::pair<Vertex *, Vertex *> el) {
-                  el.first->connected_.erase(
-                      std::find(el.first->connected_.begin(),
-                                el.first->connected_.end(), el.second));
+                  auto a = std::find(el.first->connected_.begin(),
+                                     el.first->connected_.end(), el.second);
+                  if (a != el.first->connected_.end()) {
+                    el.first->connected_.erase(a);
+                  }
                 });
   selected_edges_.clear();
 }
@@ -118,19 +112,6 @@ void Logic::HandleDeleteAll() {
 }
 
 Vertice Logic::NewVertice(int x, int y) { return Vertice{x, y}; }
-
-void Logic::HandleHold(int a, int b) {
-  auto clicked = NewVertice(a, b);
-  bool changed = false;
-  for (const auto &vl : adjacency_list_) {
-    if (std::abs(vl->vertice().x() - clicked.x()) <= vertice_radius_ &&
-        std::abs(vl->vertice().y() - clicked.y()) <= vertice_radius_) {
-      // Select Vertice and check cases
-      last_hold = true;
-      holded_id = vl->id();
-    }
-  }
-}
 
 bool Logic::HandleConnection() {
   if (selected_.size() != 2) {

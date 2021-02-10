@@ -27,8 +27,6 @@ class Logic : public QObject {
   // Handlers
 
   Q_INVOKABLE void HandleClick(int a, int b);
-  Q_INVOKABLE void HandleRelease();
-  Q_INVOKABLE void HandleHold(int a, int b);
   Q_INVOKABLE void HandleDelete();
   Q_INVOKABLE void HandleDeleteEdge();
   Q_INVOKABLE void HandleDeleteAll();

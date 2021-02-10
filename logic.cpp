@@ -2,10 +2,10 @@
 
 #include <qdebug.h>
 
-#include "geometry.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "geometry.h"
 Logic::Logic() {}
 
 void Logic::HandleClick(int a, int b) {
@@ -52,8 +52,8 @@ void Logic::HandleRelease() {
 bool Logic::HandlingSubfunc(Vertice clicked) {
   bool changed = false;
   for (const auto &vl : adjacency_list_) {
-    if (std::abs(vl->vertice().x() - clicked.x()) <= 2 * vertice_radius_ &&
-        std::abs(vl->vertice().y() - clicked.y()) <= 2 * vertice_radius_) {
+    if (std::abs(vl->vertice().x() - clicked.x()) <= 1.5 * vertice_radius_ &&
+        std::abs(vl->vertice().y() - clicked.y()) <= 1.5 * vertice_radius_) {
       if (std::abs(vl->vertice().x() - clicked.x()) <= vertice_radius_ &&
           std::abs(vl->vertice().y() - clicked.y()) <= vertice_radius_) {
         for (auto a = selected_.begin(); a != selected_.end(); a++) {
@@ -94,8 +94,7 @@ void Logic::HandleDelete() {
           t->connected_.end());
     }
   }
-  for (const auto &x : selected_)
-    x->SetActive(false);
+  for (const auto &x : selected_) x->SetActive(false);
   this->selected_.clear();
 }
 
@@ -135,8 +134,7 @@ void Logic::HandleHold(int a, int b) {
 
 bool Logic::HandleConnection() {
   if (selected_.size() != 2) {
-    for (const auto &x : selected_)
-      x->SetActive(false);
+    for (const auto &x : selected_) x->SetActive(false);
     selected_.clear();
     return false;
   } else {
@@ -148,13 +146,11 @@ bool Logic::HandleConnection() {
                    selected_[0]) == selected_[1]->connected_.end())) {
       selected_[0]->connected_.push_back(selected_[1]);
       selected_[1]->connected_.push_back(selected_[0]);
-      for (const auto &x : selected_)
-        x->SetActive(false);
+      for (const auto &x : selected_) x->SetActive(false);
       selected_.clear();
       return true;
     } else {
-      for (const auto &x : selected_)
-        x->SetActive(false);
+      for (const auto &x : selected_) x->SetActive(false);
       selected_.clear();
       return false;
     }
@@ -234,8 +230,7 @@ void Logic::Deserialize(QString filepath) {
     file.ignore(2);
     std::string bytes;
     while (file.get(ch) && ch != '}') {
-      if (ch == '{')
-        continue;
+      if (ch == '{') continue;
       bytes += ch;
     }
     std::vector<int> adjacency;
@@ -244,8 +239,7 @@ void Logic::Deserialize(QString filepath) {
 
       for (int i; ss >> i;) {
         adjacency.push_back(i + 1);
-        if (ss.peek() == ',')
-          ss.ignore();
+        if (ss.peek() == ',') ss.ignore();
       }
     }
 
@@ -266,6 +260,18 @@ void Logic::Deserialize(QString filepath) {
     }
   }
   file.close();
+}
+
+void Logic::SetIDByCoords(int x, int y) {
+  for (const auto &vl : adjacency_list_) {
+    qDebug() << std::abs(vl->vertice().x() - x);
+    qDebug() << std::abs(vl->vertice().y() - y);
+    if (std::abs(vl->vertice().x() - x) <= 1.5 * vertice_radius_ &&
+        std::abs(vl->vertice().y() - y) <= 1.5 * vertice_radius_) {
+      vl->vertice_.SetX(std::move(x));
+      vl->vertice_.SetY(std::move(y));
+    }
+  }
 }
 
 /* 				Style of Serializing

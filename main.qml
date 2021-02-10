@@ -11,6 +11,7 @@ ApplicationWindow {
     visible: true
     minimumHeight: 480
     minimumWidth: 720
+    property bool isholded: true
     Logic {
         id: logic
     }
@@ -20,7 +21,7 @@ ApplicationWindow {
         title: qsTr("Load from file")
         selectExisting: false
         onAccepted: {
-            var path = dg.fileUrl.toString()
+            let path = dg.fileUrl.toString()
             // remove prefixed "file:///"
             path = path.replace(/^(file:\/{3})/, "")
             // unescape html codes like '%23' for '#'
@@ -35,7 +36,7 @@ ApplicationWindow {
         title: qsTr("Save as")
         selectExisting: false
         onAccepted: {
-            var path = dg.fileUrl.toString()
+            let path = dg.fileUrl.toString()
             // remove prefixed "file:///"
             path = path.replace(/^(file:\/{3})/, "")
             // unescape html codes like '%23' for '#'
@@ -110,7 +111,7 @@ ApplicationWindow {
         }
         Keys.onPressed: {
             if (event.key == Qt.Key_C) {
-                var res = logic.HandleConnection()
+                let res = logic.HandleConnection()
                 graph.requestPaint()
                 if (!res) {
                     showMessageBox(
@@ -127,18 +128,32 @@ ApplicationWindow {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton
             onClicked: {
-                logic.HandleClick(mouse.x, mouse.y)
+                if (!isholded) {
+                    logic.HandleClick(mouse.x, mouse.y)
+                } else {
+                    isholded = false
+                }
+
                 graph.requestPaint()
             }
-            onReleased: {
-                logic.HandleRelease(mouse.x, mouse.y)
-            }
             onPressAndHold: {
-                logic.HandleHold(mouse.x, mouse.y)
+                console.log("holded")
+                isholded = true
+            }
+            onReleased: {
+                isholded = false
+                graph.requestPaint()
+            }
+
+            onPositionChanged: {
+                if (isholded) {
+                    logic.SetIDByCoords(mouse.x, mouse.y)
+                    graph.requestPaint()
+                }
             }
         }
         function drawCircle(id, is_active, x, y) {
-            var ctx = graph.getContext("2d")
+            let ctx = graph.getContext("2d")
             if (is_active) {
                 ctx.strokeStyle = /*"#922B21"*/ "#28B463"
                 ctx.fillStyle = /*"#922B21"*/ "#28B463"
@@ -149,8 +164,8 @@ ApplicationWindow {
 
             ctx.lineWidth = parent.size / 20
             ctx.beginPath()
-            var startAngle = Math.PI / 5 * 3
-            var endAngle = startAngle + 10 * Math.PI / 5 * 9
+            let startAngle = Math.PI / 5 * 3
+            let endAngle = startAngle + 10 * Math.PI / 5 * 9
             ctx.arc(x, y, 30, startAngle, endAngle)
             ctx.stroke()
             ctx.fill()
@@ -160,7 +175,7 @@ ApplicationWindow {
             graph.requestPaint()
         }
         function drawEdges(xfrom, yfrom, xto, yto) {
-            var ctx = graph.getContext("2d")
+            let ctx = graph.getContext("2d")
             ctx.lineWidth = 3
             if (xfrom <= 0) {
                 ctx.strokeStyle = "#922B21"
@@ -179,7 +194,7 @@ ApplicationWindow {
         }
 
         onPaint: {
-            var ctx = graph.getContext("2d")
+            let ctx = graph.getContext("2d")
             ctx.clearRect(0, 0, parent.width, parent.height)
             let to_draw_edges = logic.DrawEdgesAPI()
             console.log("Died")

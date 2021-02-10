@@ -4,8 +4,6 @@
 #include <QtQml/qqml.h>
 #include <QtQml/qqmlapplicationengine.h>
 
-#include "vertex.h"
-#include "vertice.h"
 #include <QObject>
 #include <QQmlComponent>
 #include <QString>
@@ -15,15 +13,17 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include "vertex.h"
+#include "vertice.h"
 class Logic : public QObject {
   Q_OBJECT
   Q_PROPERTY(std::vector<Vertex *> adjacency_list_ READ adjacency_list WRITE
                  SetAdjacencyList)
   QML_ELEMENT
-public:
+ public:
   Logic();
 
-public:
+ public:
   // Handlers
 
   Q_INVOKABLE void HandleClick(int a, int b);
@@ -39,6 +39,7 @@ public:
   Q_INVOKABLE void SetAdjacencyList(std::vector<Vertex *> v) {
     adjacency_list_ = v;
   }
+  Q_INVOKABLE void SetIDByCoords(int x, int y);
 
   // Drawing API
 
@@ -49,7 +50,7 @@ public:
   Q_INVOKABLE void Serialize(QString filepath);
   Q_INVOKABLE void Deserialize(QString filepath);
 
-private:
+ private:
   std::vector<Vertex *> adjacency_list_;
   std::vector<Vertex *> selected_;
   std::vector<std::pair<Vertex *, Vertex *>> selected_edges_;
@@ -59,4 +60,4 @@ private:
 };
 
 Q_DECLARE_METATYPE(std::vector<QVector4D>)
-#endif // LOGIC_H
+#endif  // LOGIC_H

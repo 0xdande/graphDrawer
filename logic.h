@@ -28,6 +28,8 @@ class Logic : public QObject {
   Q_INVOKABLE void HandleRelease();
   Q_INVOKABLE void HandleHold(int a, int b);
   Q_INVOKABLE void HandleDelete();
+  Q_INVOKABLE void HandleDeleteAll();
+  Q_INVOKABLE bool HandleConnection();
   Q_INVOKABLE Vertice NewVertice(int x, int y);
   Q_INVOKABLE bool HandlingSubfunc(Vertice clicked);
   Q_INVOKABLE std::vector<Vertex*> adjacency_list() { return adjacency_list_; }
@@ -35,6 +37,7 @@ class Logic : public QObject {
     adjacency_list_ = v;
   }
   Q_INVOKABLE std::vector<QVector4D> DrawVerticesAPI();
+  Q_INVOKABLE std::vector<QVector4D> DrawEdgesAPI();
 
  private:
   std::vector<Vertex*> adjacency_list_;

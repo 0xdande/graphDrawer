@@ -36,13 +36,18 @@ ApplicationWindow {
             }
             Action {
                 text: qsTr("&Clear")
+                onTriggered: {
+                    logic.HandleDeleteAll()
+                    graph.requestPaint()
+                }
             }
         }
         Menu {
             title: qsTr("&Help")
             Action {
                 text: qsTr("&About")
-                onTriggered: showMessageBox('Created by Artem Siryk!')
+                onTriggered: showMessageBox(
+                                 'Created by Artem Siryk!\n Press C to connect 2 selected Vertices\n Press D to delete Vertices\n')
             }
         }
     }
@@ -63,10 +68,20 @@ ApplicationWindow {
         height: parent.height
         focus: true
         Keys.onDeletePressed: {
-            console.log("Deleted Vertices")
             logic.HandleDelete()
             graph.requestPaint()
         }
+        Keys.onPressed: {
+            if (event.key == Qt.Key_C) {
+                var res = logic.HandleConnection()
+                graph.requestPaint()
+                if (!res) {
+                    showMessageBox(
+                                "Can connect only 2 selected Vertices that are not connected!")
+                }
+            }
+        }
+
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton
@@ -78,12 +93,10 @@ ApplicationWindow {
                 logic.HandleRelease(mouse.x, mouse.y)
             }
             onPressAndHold: {
-                console.log("HANDLED")
                 logic.HandleHold(mouse.x, mouse.y)
             }
         }
         function drawCircle(id, is_active, x, y) {
-            console.log(is_active)
             var ctx = graph.getContext("2d")
             if (is_active) {
                 ctx.strokeStyle = /*"#922B21"*/ "#28B463"
@@ -100,22 +113,38 @@ ApplicationWindow {
             ctx.arc(x, y, 30, startAngle, endAngle)
             ctx.stroke()
             ctx.fill()
+            ctx.fillStyle = "#F4D03F"
+            ctx.font = "25px Verdana"
+            ctx.fillText(id, (x - id.toString().length * 10), y + 10)
             graph.requestPaint()
         }
+        function drawEdges(xfrom, yfrom, xto, yto) {
+            var ctx = graph.getContext("2d")
+            ctx.lineWidth = 3
+            ctx.strokeStyle = "red"
+            ctx.beginPath()
+            ctx.moveTo(xfrom, yfrom)
+            ctx.lineTo(xto, yto)
+            ctx.closePath()
+            ctx.stroke()
+        }
+
         onPaint: {
             var ctx = graph.getContext("2d")
             ctx.clearRect(0, 0, parent.width, parent.height)
-            let to_draw = logic.DrawVerticesAPI()
-            to_draw.forEach(function (element) {
+            let to_draw_edges = logic.DrawEdgesAPI()
+            console.log("Died")
+            to_draw_edges.forEach(function (element) {
+                drawEdges(element.x, element.y, element.z, element.w)
+            })
+            let to_draw_vertices = logic.DrawVerticesAPI()
+            to_draw_vertices.forEach(function (element) {
                 drawCircle(element.x, element.y, element.z, element.w)
             })
-            console.log("Adjacency List Size:" + logic.adjacency_list.length)
         }
         TapHandler {
             id: handler
             onTapped: {
-
-                console.log("buba")
                 graph.requestPaint()
             }
         }

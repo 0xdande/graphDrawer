@@ -1,10 +1,10 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
+#include "vertice.h"
 #include <cmath>
 #include <tuple>
-#include "vertice.h"
 class Geometry {
- public:
+public:
   Geometry();
   static std::tuple<double, double, double> LineEquation(Vertice a, Vertice b);
   static double DistanceToLine(Vertice point,
@@ -13,4 +13,4 @@ class Geometry {
                                   Vertice clicked);
 };
 
-#endif  // GEOMETRY_H
+#endif // GEOMETRY_H

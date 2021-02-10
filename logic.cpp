@@ -2,10 +2,10 @@
 
 #include <qdebug.h>
 
+#include "geometry.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include "geometry.h"
 Logic::Logic() {}
 
 void Logic::HandleClick(int a, int b) {
@@ -94,7 +94,8 @@ void Logic::HandleDelete() {
           t->connected_.end());
     }
   }
-  for (const auto &x : selected_) x->SetActive(false);
+  for (const auto &x : selected_)
+    x->SetActive(false);
   this->selected_.clear();
 }
 
@@ -134,7 +135,8 @@ void Logic::HandleHold(int a, int b) {
 
 bool Logic::HandleConnection() {
   if (selected_.size() != 2) {
-    for (const auto &x : selected_) x->SetActive(false);
+    for (const auto &x : selected_)
+      x->SetActive(false);
     selected_.clear();
     return false;
   } else {
@@ -146,11 +148,13 @@ bool Logic::HandleConnection() {
                    selected_[0]) == selected_[1]->connected_.end())) {
       selected_[0]->connected_.push_back(selected_[1]);
       selected_[1]->connected_.push_back(selected_[0]);
-      for (const auto &x : selected_) x->SetActive(false);
+      for (const auto &x : selected_)
+        x->SetActive(false);
       selected_.clear();
       return true;
     } else {
-      for (const auto &x : selected_) x->SetActive(false);
+      for (const auto &x : selected_)
+        x->SetActive(false);
       selected_.clear();
       return false;
     }
@@ -230,7 +234,8 @@ void Logic::Deserialize(QString filepath) {
     file.ignore(2);
     std::string bytes;
     while (file.get(ch) && ch != '}') {
-      if (ch == '{') continue;
+      if (ch == '{')
+        continue;
       bytes += ch;
     }
     std::vector<int> adjacency;
@@ -239,7 +244,8 @@ void Logic::Deserialize(QString filepath) {
 
       for (int i; ss >> i;) {
         adjacency.push_back(i + 1);
-        if (ss.peek() == ',') ss.ignore();
+        if (ss.peek() == ',')
+          ss.ignore();
       }
     }
 

@@ -4,6 +4,8 @@
 #include <QtQml/qqml.h>
 #include <QtQml/qqmlapplicationengine.h>
 
+#include "vertex.h"
+#include "vertice.h"
 #include <QObject>
 #include <QQmlComponent>
 #include <QString>
@@ -13,17 +15,15 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include "vertex.h"
-#include "vertice.h"
 class Logic : public QObject {
   Q_OBJECT
-  Q_PROPERTY(std::vector<Vertex*> adjacency_list_ READ adjacency_list WRITE
+  Q_PROPERTY(std::vector<Vertex *> adjacency_list_ READ adjacency_list WRITE
                  SetAdjacencyList)
   QML_ELEMENT
- public:
+public:
   Logic();
 
- public:
+public:
   // Handlers
 
   Q_INVOKABLE void HandleClick(int a, int b);
@@ -35,8 +35,8 @@ class Logic : public QObject {
   Q_INVOKABLE bool HandleConnection();
   Q_INVOKABLE Vertice NewVertice(int x, int y);
   Q_INVOKABLE bool HandlingSubfunc(Vertice clicked);
-  Q_INVOKABLE std::vector<Vertex*> adjacency_list() { return adjacency_list_; }
-  Q_INVOKABLE void SetAdjacencyList(std::vector<Vertex*> v) {
+  Q_INVOKABLE std::vector<Vertex *> adjacency_list() { return adjacency_list_; }
+  Q_INVOKABLE void SetAdjacencyList(std::vector<Vertex *> v) {
     adjacency_list_ = v;
   }
 
@@ -49,14 +49,14 @@ class Logic : public QObject {
   Q_INVOKABLE void Serialize(QString filepath);
   Q_INVOKABLE void Deserialize(QString filepath);
 
- private:
-  std::vector<Vertex*> adjacency_list_;
-  std::vector<Vertex*> selected_;
-  std::vector<std::pair<Vertex*, Vertex*>> selected_edges_;
+private:
+  std::vector<Vertex *> adjacency_list_;
+  std::vector<Vertex *> selected_;
+  std::vector<std::pair<Vertex *, Vertex *>> selected_edges_;
   uint8_t vertice_radius_ = 30;
   uint8_t last_hold = 0;
   uint8_t holded_id = 0;
 };
 
 Q_DECLARE_METATYPE(std::vector<QVector4D>)
-#endif  // LOGIC_H
+#endif // LOGIC_H

@@ -1,10 +1,8 @@
 #include "vertex.h"
 Vertex::Vertex(int id, Vertice vertice, bool is_active,
-               std::vector<Vertex*> connected)
-    : id_(id),
-      vertice_(vertice),
-      is_active_(is_active),
-      connected_(connected) {}
+               std::vector<Vertex *> connected)
+    : id_(id), vertice_(vertice), is_active_(is_active), connected_(connected) {
+}
 
 Vertex::Vertex() {
   id_ = 0;

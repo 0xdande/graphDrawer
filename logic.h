@@ -24,6 +24,8 @@ class Logic : public QObject {
   Logic();
 
  public:
+  // Handlers
+
   Q_INVOKABLE void HandleClick(int a, int b);
   Q_INVOKABLE void HandleRelease();
   Q_INVOKABLE void HandleHold(int a, int b);
@@ -36,9 +38,13 @@ class Logic : public QObject {
   Q_INVOKABLE void SetAdjacencyList(std::vector<Vertex*> v) {
     adjacency_list_ = v;
   }
+
+  // Drawing API
+
   Q_INVOKABLE std::vector<QVector4D> DrawVerticesAPI();
   Q_INVOKABLE std::vector<QVector4D> DrawEdgesAPI();
 
+  // Serialize; Deserialize
  private:
   std::vector<Vertex*> adjacency_list_;
   std::vector<Vertex*> selected_;

@@ -1,10 +1,11 @@
 #include "geometry.h"
+#include <qdebug.h>
 Geometry::Geometry() {}
 #define PRECISION 5
 std::tuple<double, double, double> Geometry::LineEquation(Vertice a,
                                                           Vertice b) {
-  return std::make_tuple(a.y() - b.y(), b.x() - a.x(),
-                         a.x() * b.y() - a.y() * b.y());
+  return std::make_tuple(b.y() - a.y(), a.x() - b.x(),
+                         b.x() * a.y() - a.x() * b.y());
 }
 double Geometry::DistanceToLine(Vertice point,
                                 std::tuple<double, double, double> line) {
@@ -34,6 +35,7 @@ double Geometry::DistanceToSegment(Vertice begin_segment, Vertice end_segment,
                   (-2 * clb * segment_length);
 
   if (angle1 >= 0 && angle2 >= 0) {
+    qDebug() << "Distance to Line: ";
     return Geometry::DistanceToLine(
         clicked, Geometry::LineEquation(begin_segment, end_segment));
   }

@@ -85,7 +85,7 @@ ApplicationWindow {
             Action {
                 text: qsTr("&About")
                 onTriggered: showMessageBox(
-                                 'Created by Artem Siryk!\n Press C to connect 2 selected Vertices\n Press D to delete Vertices\nPress E to delete Edges')
+                                 'Created by Artem Siryk!\n Press C to connect 2 selected Vertices\n Press D to delete Vertices\n Press E to delete Edges')
             }
         }
     }

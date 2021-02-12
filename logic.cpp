@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include "geometry.h"
+#include "util.hpp"
 Logic::Logic() {}
 
 void Logic::HandleClick(int a, int b) {
@@ -190,54 +191,40 @@ void Logic::Serialize(QString filepath) {
   file << el->connected_[el->connected_.size() - 1]->id() - 1 << '}' << '}';
   file.close();
 }
+
 void Logic::Deserialize(QString filepath) {
   HandleDeleteAll();
   std::ifstream file;
   std::vector<std::vector<int>> constructed;
   file.open(filepath.toStdString(), std::ios::in);
-  int cr;
-  file >> cr;
   char ch;
-  file.ignore(1);
+  int cr;
+  util::ReadFileData(file, cr, 1);
   for (int i = 0; i < cr; i++) {
-    file.ignore(1);
-    int id;
-    file >> id;
-    file.ignore(2);
-    int x, y;
-    file >> x;
-    file.ignore(1);
-    file >> y;
-    file.ignore(2);
+    int id, x, y;
+    util::ReadFileData(file, 1, id, 2, x, 1, y, 2);
     std::string bytes;
-    while (file.get(ch) && ch != '}') {
+    while ((util::ReadFileData(file, ch), true) && ch != '}' && ch != EOF) {
       if (ch == '{') continue;
       bytes += ch;
     }
-    std::vector<int> adjacency;
-    if (bytes.size()) {
-      std::stringstream ss(bytes);
-
-      for (int i; ss >> i;) {
-        adjacency.push_back(i + 1);
-        if (ss.peek() == ',') ss.ignore();
-      }
-    }
-
     auto to_push = new Vertex{
         id + 1,
         Vertice{x, y},
         false,
         std::vector<Vertex *>{},
     };
-    file.ignore(2);
+    util::ReadFileData(file, 2);
     adjacency_list_.push_back(to_push);
-    constructed.push_back(adjacency);
+    constructed.push_back(util::BytesToInts(bytes));
   }
 
+  qDebug() << constructed;
   for (int i = 0; i < constructed.size(); i++) {
     for (int j = 0; j < constructed[i].size(); j++) {
-      adjacency_list_[i]->connected_.push_back(adjacency_list_[j]);
+      qDebug() << constructed[i][j];
+      adjacency_list_[i]->connected_.push_back(
+          adjacency_list_[constructed[i][j]]);  // adjacency_list_[j]);
     }
   }
   file.close();
@@ -249,6 +236,11 @@ void Logic::SetIDByCoords(int x, int y) {
     qDebug() << std::abs(vl->vertice().y() - y);
     if (std::abs(vl->vertice().x() - x) <= 1.5 * vertice_radius_ &&
         std::abs(vl->vertice().y() - y) <= 1.5 * vertice_radius_) {
+      for (const auto &d : adjacency_list_) {
+        if (std::abs(d->vertice().x() - x) <= 1.5 * vertice_radius_ &&
+            std::abs(d->vertice().y() - y) <= 1.5 * vertice_radius_ && d != vl)
+          return;
+      }
       vl->vertice_.SetX(std::move(x));
       vl->vertice_.SetY(std::move(y));
     }

@@ -35,6 +35,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     geometry.h \
     logic.h \
+    util.hpp \
     vertex.h \
     vertice.h
 

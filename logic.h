@@ -13,6 +13,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 #include "vertex.h"
 #include "vertice.h"
 class Logic : public QObject {
@@ -38,6 +39,9 @@ class Logic : public QObject {
     adjacency_list_ = v;
   }
   Q_INVOKABLE void SetIDByCoords(int x, int y);
+  void DFS(int s);
+  void EulersPath(std::vector<Vertex *> tmp_adjacency);
+  std::vector<Vertex *> CopyGraph();
 
   // Drawing API
 

@@ -5,6 +5,8 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stack>
+
 #include "geometry.h"
 #include "util.hpp"
 Logic::Logic() {}
@@ -142,8 +144,10 @@ bool Logic::HandleConnection() {
 std::vector<QVector4D> Logic::DrawVerticesAPI() {
   std::vector<QVector4D> to_draw;
   for (const auto &x : adjacency_list()) {
-    to_draw.push_back(
-        QVector4D{x->id(), x->is_active_, x->vertice().x(), x->vertice().y()});
+    to_draw.push_back(QVector4D{static_cast<float>(x->id()),
+                                static_cast<float>(x->is_active_),
+                                static_cast<float>(x->vertice().x()),
+                                static_cast<float>(x->vertice().y())});
   }
   return to_draw;
 }
@@ -155,11 +159,15 @@ std::vector<QVector4D> Logic::DrawEdgesAPI() {
       if (std::find(selected_edges_.begin(), selected_edges_.end(),
                     std::pair<Vertex *, Vertex *>{x, y}) !=
           selected_edges_.end()) {
-        to_draw.push_back(QVector4D{-x->vertice().x(), -x->vertice().y(),
-                                    -y->vertice().x(), -y->vertice().y()});
+        to_draw.push_back(QVector4D{static_cast<float>(-x->vertice().x()),
+                                    static_cast<float>(-x->vertice().y()),
+                                    static_cast<float>(-y->vertice().x()),
+                                    static_cast<float>(-y->vertice().y())});
       } else {
-        to_draw.push_back(QVector4D{x->vertice().x(), x->vertice().y(),
-                                    y->vertice().x(), y->vertice().y()});
+        to_draw.push_back(QVector4D{static_cast<float>(x->vertice().x()),
+                                    static_cast<float>(x->vertice().y()),
+                                    static_cast<float>(y->vertice().x()),
+                                    static_cast<float>(y->vertice().y())});
       }
     }
   }
@@ -178,20 +186,26 @@ void Logic::Serialize(QString filepath) {
       adjacency_list_.begin(), adjacency_list_.end() - 1, [&](Vertex *el) {
         file << '{' << el->id_ - 1 << ',' << '{' << el->vertice_.x() << ','
              << el->vertice_.y() << '}' << ',' << '{';
-        std::for_each(el->connected_.begin(), el->connected_.end() - 1,
-                      [&](Vertex *el) { file << el->id() - 1 << ','; });
-        file << el->connected_[el->connected_.size() - 1]->id() - 1 << '}'
-             << '}' << ',';
+        if (!el->connected_.empty()) {
+          std::for_each(el->connected_.begin(), el->connected_.end() - 1,
+                        [&](Vertex *el) { file << el->id() - 1 << ','; });
+          file << el->connected_[el->connected_.size() - 1]->id() - 1 << '}'
+               << '}' << ',';
+        }
       });
+
   auto el = adjacency_list_[adjacency_list_.size() - 1];
   file << '{' << el->id_ - 1 << ',' << '{' << el->vertice_.x() << ','
        << el->vertice_.y() << '}' << ',' << '{';
-  std::for_each(el->connected_.begin(), el->connected_.end() - 1,
-                [&](Vertex *el) { file << el->id() - 1 << ','; });
-  file << el->connected_[el->connected_.size() - 1]->id() - 1 << '}' << '}';
+  if (el->connected_.size() != 0) {
+    std::for_each(el->connected_.begin(), el->connected_.end() - 1,
+                  [&](Vertex *el) { file << el->id() - 1 << ','; });
+    file << el->connected_[el->connected_.size() - 1]->id() - 1 << '}';
+  }
+  file << '}';
   file.close();
 }
-
+// ERROR WHILE SEEKING EMPTY VECTOR TO BE FIXED
 void Logic::Deserialize(QString filepath) {
   HandleDeleteAll();
   std::ifstream file;
@@ -243,6 +257,55 @@ void Logic::SetIDByCoords(int x, int y) {
       }
       vl->vertice_.SetX(std::move(x));
       vl->vertice_.SetY(std::move(y));
+    }
+  }
+}
+
+std::vector<Vertex *> Logic::CopyGraph() {}
+
+void Logic::DFS(int s) {
+  std::vector<bool> visited(adjacency_list_.size() + 1, false);
+  std::stack<int> stack;
+  stack.push(s);
+
+  while (!stack.empty()) {
+    s = stack.top();
+    stack.pop();
+    if (!visited[s - 1]) {
+      visited[s - 1] = true;
+    }
+    for (const auto &x : adjacency_list_[s - 1]->connected_)
+      if (!visited[x->id()]) stack.push(x->id());
+  }
+}
+
+void Logic::EulersPath(std::vector<Vertex *> tmp_adjacency) {
+  std::vector<int> vertices;
+  int odds = 0;
+  int s = 0;
+  for (const auto &x : tmp_adjacency) {
+    if (x->connected_.size() % 2) {
+      s = x->id();
+      odds++;
+    }
+  }
+
+  if (odds != 2) {
+    exit(0xdeadbeef);
+  }
+
+  std::stack<int> stack;
+  stack.push(s);
+
+  while (!stack.empty()) {
+    s = stack.top();
+    stack.pop();
+    if (!tmp_adjacency[s - 1]->connected_.empty()) {
+      for (const auto &x : tmp_adjacency[s - 1]->connected_) {
+        stack.push(x->id());
+        vertices.push_back(x->id());
+        tmp_adjacency.erase(tmp_adjacency.begin() + x->id() - 1);
+      }
     }
   }
 }

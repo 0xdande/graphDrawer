@@ -15,6 +15,16 @@ ApplicationWindow {
     Logic {
         id: logic
     }
+    function create_timer() {
+        return Qt.createQmlObject("import QtQuick 2.0; Timer {}", window)
+    }
+    function delay(delayTime, cb) {
+        let timer = create_timer()
+        timer.interval = delayTime
+        timer.repeat = true
+        timer.triggered.connect(cb)
+        timer.start()
+    }
 
     FileDialog {
         id: dgde
@@ -77,6 +87,18 @@ ApplicationWindow {
                 onTriggered: {
                     logic.HandleDeleteAll()
                     graph.requestPaint()
+                }
+            }
+        }
+        Menu {
+            title: qsTr("&Algorithms")
+            Action {
+                text: qsTr("&Eulers Path")
+                onTriggered: {
+                    var a = logic.EulersPathAPI()
+                    //                    for (var i = 0; i < a * 2; i++) {
+                    delay(2000, graph.requestPaint)
+                    //                    }
                 }
             }
         }
@@ -150,11 +172,11 @@ ApplicationWindow {
         function drawCircle(id, is_active, x, y) {
             let ctx = graph.getContext("2d")
             if (is_active) {
-                ctx.strokeStyle = /*"#922B21"*/ "#28B463"
-                ctx.fillStyle = /*"#922B21"*/ "#28B463"
+                ctx.strokeStyle = "#28B463"
+                ctx.fillStyle = "#28B463"
             } else {
-                ctx.strokeStyle = "#34495E" //"#6495ED"
-                ctx.fillStyle = "#34495E" //"#6495ED"
+                ctx.strokeStyle = "#34495E"
+                ctx.fillStyle = "#34495E"
             }
 
             ctx.lineWidth = parent.size / 20

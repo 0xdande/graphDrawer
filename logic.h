@@ -25,7 +25,7 @@ class Logic : public QObject {
   Logic();
 
  public:
-  // Handlers
+  /// Handlers
 
   Q_INVOKABLE void HandleClick(int a, int b);
   Q_INVOKABLE void HandleDelete();
@@ -43,7 +43,7 @@ class Logic : public QObject {
   void EulersPath(std::vector<Vertex *> tmp_adjacency);
   std::vector<Vertex *> CopyGraph();
 
-  // Drawing API
+  /// Drawing API
 
   Q_INVOKABLE std::vector<QVector4D> DrawVerticesAPI();
   Q_INVOKABLE std::vector<QVector4D> DrawEdgesAPI();
@@ -51,6 +51,9 @@ class Logic : public QObject {
   // Serialize; Deserialize
   Q_INVOKABLE void Serialize(QString filepath);
   Q_INVOKABLE void Deserialize(QString filepath);
+
+  ///
+  Q_INVOKABLE int EulersPathAPI();
 
  private:
   std::vector<Vertex *> adjacency_list_;

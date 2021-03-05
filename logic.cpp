@@ -1,11 +1,15 @@
 ﻿#include "logic.h"
 
 #include <qdebug.h>
+#include <QRandomGenerator>
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <stack>
+#include <thread>
 
 #include "geometry.h"
 #include "util.hpp"
@@ -191,6 +195,8 @@ void Logic::Serialize(QString filepath) {
                         [&](Vertex *el) { file << el->id() - 1 << ','; });
           file << el->connected_[el->connected_.size() - 1]->id() - 1 << '}'
                << '}' << ',';
+        } else {
+          file << "}},";
         }
       });
 
@@ -201,11 +207,13 @@ void Logic::Serialize(QString filepath) {
     std::for_each(el->connected_.begin(), el->connected_.end() - 1,
                   [&](Vertex *el) { file << el->id() - 1 << ','; });
     file << el->connected_[el->connected_.size() - 1]->id() - 1 << '}';
+  } else {
+    file << "}}";
   }
   file << '}';
   file.close();
 }
-// ERROR WHILE SEEKING EMPTY VECTOR TO BE FIXED
+// ERROR WHILE SEEKING EMPTY VECTOR TO BE FIXED fixed ez
 void Logic::Deserialize(QString filepath) {
   HandleDeleteAll();
   std::ifstream file;
@@ -261,7 +269,28 @@ void Logic::SetIDByCoords(int x, int y) {
   }
 }
 
-std::vector<Vertex *> Logic::CopyGraph() {}
+/// Just copying graph to DESTROY
+
+std::vector<Vertex *> Logic::CopyGraph() {
+  std::vector<Vertex *> to_destroy;
+  for_each(adjacency_list_.begin(), adjacency_list_.end(), [&](Vertex *x) {
+    auto to_push = new Vertex{
+        x->id(),
+        x->vertice(),
+        false,
+        std::vector<Vertex *>{},
+    };
+    to_destroy.push_back(to_push);
+  });
+  for (int i = 0; i < adjacency_list_.size(); i++) {
+    std::for_each(
+        adjacency_list_[i]->connected_.begin(),
+        adjacency_list_[i]->connected_.end(), [&](Vertex *x) {
+          to_destroy[i]->connected_.push_back(to_destroy[x->id() - 1]);
+        });
+  }
+  return to_destroy;
+}
 
 void Logic::DFS(int s) {
   std::vector<bool> visited(adjacency_list_.size() + 1, false);
@@ -282,32 +311,62 @@ void Logic::DFS(int s) {
 void Logic::EulersPath(std::vector<Vertex *> tmp_adjacency) {
   std::vector<int> vertices;
   int odds = 0;
-  int s = 0;
+  int start = 0;
   for (const auto &x : tmp_adjacency) {
     if (x->connected_.size() % 2) {
-      s = x->id();
+      start = x->id();
       odds++;
     }
   }
 
-  if (odds != 2) {
+  if (odds == 0) {
+    start = QRandomGenerator::global()->generate() % tmp_adjacency.size() + 1;
+  }
+  qDebug() << odds;
+  if (odds != 2 && odds != 0) {
     exit(0xdeadbeef);
   }
 
   std::stack<int> stack;
-  stack.push(s);
-
+  stack.push(start);
   while (!stack.empty()) {
-    s = stack.top();
+    auto s = stack.top() - 1;
+    qDebug() << s + 1;
     stack.pop();
-    if (!tmp_adjacency[s - 1]->connected_.empty()) {
-      for (const auto &x : tmp_adjacency[s - 1]->connected_) {
-        stack.push(x->id());
-        vertices.push_back(x->id());
-        tmp_adjacency.erase(tmp_adjacency.begin() + x->id() - 1);
-      }
+    if (!tmp_adjacency[s]->connected_.empty()) {
+      auto process = tmp_adjacency[s]->connected_[0];
+      stack.push(process->id());
+      tmp_adjacency[s]->connected_.erase(tmp_adjacency[s]->connected_.begin());
+      process->connected_.erase(
+          std::remove_if(process->connected_.begin(), process->connected_.end(),
+                         [&](Vertex *x) { return (x->id() == s + 1); }),
+          process->connected_.end());
     }
+    vertices.push_back(s);
   }
+  for (auto &x : adjacency_list_) {
+    delete x;
+  }
+  adjacency_list_ = tmp_adjacency;
+  for (int i = 1; i < vertices.size(); i++) {
+    selected_.push_back(adjacency_list_[vertices[i]]);
+    selected_.push_back(adjacency_list_[vertices[i - 1]]);
+    qDebug() << vertices[i] << vertices[i - 1];
+    HandleConnection();
+    std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+  }
+  qDebug() << vertices;
+}
+
+int Logic::EulersPathAPI() {
+  int e = 0;
+  for (const auto &x : adjacency_list_) {
+    e += x->connected_.size();
+  }
+  std::thread a(&Logic::EulersPath, this, CopyGraph());
+  a.detach();
+  qDebug() << e;
+  return e / 2;
 }
 
 /* 				Style of Serializing

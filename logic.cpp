@@ -326,34 +326,39 @@ void Logic::EulersPath(std::vector<Vertex *> tmp_adjacency) {
   if (odds != 2 && odds != 0) {
     exit(0xdeadbeef);
   }
-
   std::stack<int> stack;
   stack.push(start);
+  auto s = stack.top() - 1;
   while (!stack.empty()) {
-    auto s = stack.top() - 1;
-    qDebug() << s + 1;
-    stack.pop();
-    if (!tmp_adjacency[s]->connected_.empty()) {
-      auto process = tmp_adjacency[s]->connected_[0];
-      stack.push(process->id());
-      tmp_adjacency[s]->connected_.erase(tmp_adjacency[s]->connected_.begin());
-      process->connected_.erase(
-          std::remove_if(process->connected_.begin(), process->connected_.end(),
-                         [&](Vertex *x) { return (x->id() == s + 1); }),
-          process->connected_.end());
+    auto from = tmp_adjacency[s];
+    if (!from->connected_.empty()) {
+      stack.push(from->id_);
+      auto to = tmp_adjacency[s]->connected_[0];
+      from->connected_.erase(from->connected_.begin());
+      for (auto it = to->connected_.begin(); it != to->connected_.end(); it++) {
+        if ((*it)->id() == from->id()) {
+          to->connected_.erase(it);
+          break;
+        }
+      }
+      s = to->id() - 1;
+    } else {
+      vertices.push_back(s);
+      s = stack.top() - 1;
+      stack.pop();
     }
-    vertices.push_back(s);
   }
   for (auto &x : adjacency_list_) {
     delete x;
   }
   adjacency_list_ = tmp_adjacency;
+  std::reverse(vertices.begin(), vertices.end());
   for (int i = 1; i < vertices.size(); i++) {
     selected_.push_back(adjacency_list_[vertices[i]]);
     selected_.push_back(adjacency_list_[vertices[i - 1]]);
     qDebug() << vertices[i] << vertices[i - 1];
     HandleConnection();
-    std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
   qDebug() << vertices;
 }
@@ -363,7 +368,11 @@ int Logic::EulersPathAPI() {
   for (const auto &x : adjacency_list_) {
     e += x->connected_.size();
   }
+
   std::thread a(&Logic::EulersPath, this, CopyGraph());
+  //  for (auto &x : adjacency_list_) {
+  //    x->connected_.clear();
+  //  }
   a.detach();
   qDebug() << e;
   return e / 2;

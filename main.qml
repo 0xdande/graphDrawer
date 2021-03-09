@@ -97,7 +97,7 @@ ApplicationWindow {
                 onTriggered: {
                     var a = logic.EulersPathAPI()
                     //                    for (var i = 0; i < a * 2; i++) {
-                    delay(2000, graph.requestPaint)
+                    delay(500, graph.requestPaint)
                     //                    }
                 }
             }

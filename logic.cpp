@@ -370,9 +370,6 @@ int Logic::EulersPathAPI() {
   }
 
   std::thread a(&Logic::EulersPath, this, CopyGraph());
-  //  for (auto &x : adjacency_list_) {
-  //    x->connected_.clear();
-  //  }
   a.detach();
   qDebug() << e;
   return e / 2;

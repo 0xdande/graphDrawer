@@ -102,6 +102,13 @@ void Logic::HandleDeleteEdge() {
                 [](std::pair<Vertex *, Vertex *> el) {
                   auto a = std::find(el.first->connected_.begin(),
                                      el.first->connected_.end(), el.second);
+                  //                  for (auto a =
+                  //                  el.first->connected_.begin();
+                  //                       a != el->connected_.end(); a++) {
+                  //                    if (a->first == el.second) {
+                  //                      el->connected_.erase(a);
+                  //                    }
+                  //                  }
                   if (a != el.first->connected_.end()) {
                     el.first->connected_.erase(a);
                   }
@@ -312,7 +319,7 @@ void Logic::EulersPath(std::vector<Vertex *> tmp_adjacency) {
   std::vector<int> vertices;
   int odds = 0;
   int start = 0;
-  for (const auto &x : tmp_adjacency) {
+  for (const auto &x : adjacency_list_) {
     if (x->connected_.size() % 2) {
       start = x->id();
       odds++;
@@ -320,7 +327,7 @@ void Logic::EulersPath(std::vector<Vertex *> tmp_adjacency) {
   }
 
   if (odds == 0) {
-    start = QRandomGenerator::global()->generate() % tmp_adjacency.size() + 1;
+    start = QRandomGenerator::global()->generate() % adjacency_list_.size() + 1;
   }
   qDebug() << odds;
   if (odds != 2 && odds != 0) {
@@ -330,10 +337,13 @@ void Logic::EulersPath(std::vector<Vertex *> tmp_adjacency) {
   stack.push(start);
   auto s = stack.top() - 1;
   while (!stack.empty()) {
-    auto from = tmp_adjacency[s];
+    auto from = adjacency_list_[s];
+    adjacency_list_[s]->SetActive(true);
+    selected_.push_back(adjacency_list_[s]);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     if (!from->connected_.empty()) {
       stack.push(from->id_);
-      auto to = tmp_adjacency[s]->connected_[0];
+      auto to = adjacency_list_[s]->connected_[0];
       from->connected_.erase(from->connected_.begin());
       for (auto it = to->connected_.begin(); it != to->connected_.end(); it++) {
         if ((*it)->id() == from->id()) {
@@ -341,6 +351,8 @@ void Logic::EulersPath(std::vector<Vertex *> tmp_adjacency) {
           break;
         }
       }
+      adjacency_list_[s]->SetActive(false);
+      selected_.pop_back();
       s = to->id() - 1;
     } else {
       vertices.push_back(s);
@@ -348,16 +360,17 @@ void Logic::EulersPath(std::vector<Vertex *> tmp_adjacency) {
       stack.pop();
     }
   }
+  selected_.clear();
   for (auto &x : adjacency_list_) {
-    delete x;
+    x->SetActive(false);
   }
-  adjacency_list_ = tmp_adjacency;
+  //  adjacency_list_ = tmp_adjacency;
   std::reverse(vertices.begin(), vertices.end());
   for (int i = 1; i < vertices.size(); i++) {
     selected_.push_back(adjacency_list_[vertices[i]]);
     selected_.push_back(adjacency_list_[vertices[i - 1]]);
-    qDebug() << vertices[i] << vertices[i - 1];
     HandleConnection();
+    qDebug() << vertices[i] << vertices[i - 1];
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
   qDebug() << vertices;
@@ -373,6 +386,78 @@ int Logic::EulersPathAPI() {
   a.detach();
   qDebug() << e;
   return e / 2;
+}
+
+std::vector<int> Logic::DjikstraAlgo(int source, int to) {
+  std::vector<int> parents(adjacency_list_.size());
+  std::vector<unsigned long long> dist(adjacency_list_.size(), INT64_MAX);
+  std::set<std::pair<int, unsigned long long>> node_path;
+  auto tmp = CopyGraph();
+  dist[source] = 0;
+  node_path.insert(std::pair<int, unsigned long long>(0, source));
+
+  while (!node_path.empty()) {
+    std::pair<int, unsigned long long> top = *node_path.begin();
+    node_path.erase(node_path.begin());
+
+    int source = top.second;
+
+    for (auto &x : adjacency_list_[source]->connected_) {
+      int adj_node = x->id() - 1;
+      int path_adjnode = 1;
+
+      if (dist[adj_node] > path_adjnode + dist[source]) {
+        parents[adj_node] = source;
+        if (dist[adj_node] != INT64_MAX) {
+          node_path.erase(node_path.find(
+              std::pair<int, unsigned long long>(dist[adj_node], adj_node)));
+        }
+        dist[adj_node] = path_adjnode + dist[source];
+        node_path.insert(
+            std::pair<int, unsigned long long>(dist[adj_node], adj_node));
+      }
+    }
+  }
+  for (auto &x : adjacency_list_) {
+    x->SetActive(false);
+  }
+
+  for (auto &x : adjacency_list_) {
+    x->connected_.clear();
+  }
+  selected_.clear();
+
+  std::vector<int> path;
+  for (int v = to; v != source; v = parents[v]) path.push_back(v);
+  path.push_back(source);
+  std::reverse(path.begin(), path.end());
+
+  for (int i = 0; i < adjacency_list_.size(); i++)
+    qDebug() << "Source Node(" << source + 1 << ") -> Destination Node(" << i
+             << ") : " << dist[i] << '\n';
+  for (int i = 1; i < path.size(); i++) {
+    selected_.push_back(adjacency_list_[path[i]]);
+    selected_.push_back(adjacency_list_[path[i - 1]]);
+    HandleConnection();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  }
+  adjacency_list_ = tmp;
+  qDebug() << path;
+  return path;
+}
+
+bool Logic::DjikstraAPI() {
+  if (selected_.size() == 2) {
+    std::thread a(&Logic::DjikstraAlgo, this, selected_[0]->id() - 1,
+                  selected_[1]->id() - 1);
+    selected_.clear();
+    a.detach();
+    return true;
+  } else {
+    selected_.clear();
+    return false;
+  }
+  selected_.clear();
 }
 
 /* 				Style of Serializing

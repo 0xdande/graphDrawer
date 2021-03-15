@@ -40,7 +40,6 @@ class Logic : public QObject {
   }
   Q_INVOKABLE void SetIDByCoords(int x, int y);
   void DFS(int s);
-  void EulersPath(std::vector<Vertex *> tmp_adjacency);
   std::vector<Vertex *> CopyGraph();
 
   /// Drawing API
@@ -52,8 +51,13 @@ class Logic : public QObject {
   Q_INVOKABLE void Serialize(QString filepath);
   Q_INVOKABLE void Deserialize(QString filepath);
 
-  ///
+  /// Euler's Path
+  void EulersPath(std::vector<Vertex *> tmp_adjacency);
   Q_INVOKABLE int EulersPathAPI();
+
+  /// Djikstra Algo
+  std::vector<int> DjikstraAlgo(int source, int to);
+  Q_INVOKABLE bool DjikstraAPI();
 
  private:
   std::vector<Vertex *> adjacency_list_;

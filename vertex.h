@@ -8,7 +8,7 @@
 
 #include "vertice.h"
 class Vertex {
-public:
+ public:
   Vertex(int id, Vertice vertice, bool is_active,
          std::vector<Vertex *> connected);
   Vertex();
@@ -27,4 +27,4 @@ public:
   std::vector<Vertex *> connected_;
 };
 
-#endif // VERTEX_H
+#endif  // VERTEX_H

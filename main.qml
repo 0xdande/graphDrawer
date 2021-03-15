@@ -55,7 +55,6 @@ ApplicationWindow {
             graph.requestPaint()
             console.log(cleanPath)
         }
-        //        Component.onCompleted: visible = true
     }
     menuBar: MenuBar {
         Menu {
@@ -101,13 +100,24 @@ ApplicationWindow {
                     //                    }
                 }
             }
+            Action {
+                text: qsTr("&Djikstra")
+                onTriggered: {
+                    let res = logic.DjikstraAPI()
+                    if (!res) {
+                        showMessageBox(
+                                    "Select 2 vertices, first - start, second - endpoint")
+                    }
+                    delay(500, graph.requestPaint)
+                }
+            }
         }
         Menu {
             title: qsTr("&Help")
             Action {
                 text: qsTr("&About")
                 onTriggered: showMessageBox(
-                                 'Created by Artem Siryk!\n Press C to connect 2 selected Vertices\n Press D to delete Vertices\n Press E to delete Edges')
+                                 'Created by Artem Siryk!\nPress C to connect 2 selected Vertices\nPress D to delete Vertices\nPress E to delete Edges\nRead Algorithms section for more info')
             }
         }
     }

@@ -1,6 +1,6 @@
 #include "vertex.h"
 Vertex::Vertex(int id, Vertice vertice, bool is_active,
-               std::vector<Vertex *> connected)
+               std::vector<std::pair<Vertex *, int>> connected)
     : id_(id),
       vertice_(vertice),
       is_active_(is_active),

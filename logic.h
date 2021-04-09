@@ -4,11 +4,12 @@
 #include <QtQml/qqml.h>
 #include <QtQml/qqmlapplicationengine.h>
 
+#include <QMatrix4x4>
 #include <QObject>
 #include <QQmlComponent>
 #include <QString>
 #include <QVariant>
-#include <QVector4D>
+#include <QVector3D>
 #include <tuple>
 #include <unordered_set>
 #include <utility>
@@ -16,6 +17,9 @@
 
 #include "vertex.h"
 #include "vertice.h"
+
+typedef std::array<int, 5> TArr;
+
 class Logic : public QObject {
   Q_OBJECT
   Q_PROPERTY(std::vector<Vertex *> adjacency_list_ READ adjacency_list WRITE
@@ -27,7 +31,7 @@ class Logic : public QObject {
  public:
   /// Handlers
 
-  Q_INVOKABLE void HandleClick(int a, int b);
+  Q_INVOKABLE QVector3D HandleClick(int a, int b);
   Q_INVOKABLE void HandleDelete();
   Q_INVOKABLE void HandleDeleteEdge();
   Q_INVOKABLE void HandleDeleteAll();
@@ -39,13 +43,15 @@ class Logic : public QObject {
     adjacency_list_ = v;
   }
   Q_INVOKABLE void SetIDByCoords(int x, int y);
+  Q_INVOKABLE void ChangePrice(int from, int to, int price);
+
   void DFS(int s);
   std::vector<Vertex *> CopyGraph();
 
   /// Drawing API
 
-  Q_INVOKABLE std::vector<QVector4D> DrawVerticesAPI();
-  Q_INVOKABLE std::vector<QVector4D> DrawEdgesAPI();
+  Q_INVOKABLE std::vector<QMatrix4x4> DrawVerticesAPI();
+  Q_INVOKABLE std::vector<QMatrix4x4> DrawEdgesAPI();
 
   // Serialize; Deserialize
   Q_INVOKABLE void Serialize(QString filepath);
@@ -59,6 +65,9 @@ class Logic : public QObject {
   std::vector<int> DjikstraAlgo(int source, int to);
   Q_INVOKABLE bool DjikstraAPI();
 
+  /// Kruskals Algo
+  Q_INVOKABLE void KruskalAlgo();
+
  private:
   std::vector<Vertex *> adjacency_list_;
   std::vector<Vertex *> selected_;
@@ -69,4 +78,6 @@ class Logic : public QObject {
 };
 
 Q_DECLARE_METATYPE(std::vector<QVector4D>)
+Q_DECLARE_METATYPE(std::vector<QMatrix4x4>)
+
 #endif  // LOGIC_H

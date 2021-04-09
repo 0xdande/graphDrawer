@@ -1,8 +1,9 @@
 ﻿#include "logic.h"
 
 #include <qdebug.h>
-#include <QRandomGenerator>
 
+#include <QMatrix4x4>
+#include <QRandomGenerator>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -15,38 +16,53 @@
 #include "util.hpp"
 Logic::Logic() {}
 
-void Logic::HandleClick(int a, int b) {
+QVector3D Logic::HandleClick(int a, int b) {
   if (!last_hold) {
     auto clicked = NewVertice(a, b);
     if (HandlingSubfunc(clicked)) {
-      return;
+      return {0, 0, 0};
     }
     for (const auto &x : adjacency_list_) {
       for (auto &d : x->connected_) {
-        if (Geometry::DistanceToSegment(d->vertice(), x->vertice(), clicked) <=
-            10) {
+        auto xfrom = x->vertice().x();
+        auto yfrom = x->vertice().y();
+        auto xto = d.first->vertice().x();
+        auto yto = d.first->vertice().y();
+
+        if (std::abs((xfrom + xto) / 2 +
+                     (std::min(yfrom, yto) / std::max(yto, yfrom)) * 20 - a) <=
+                40 &&
+            std::abs((yfrom + yto) / 2 +
+                     (1 - (std::min(yto, yfrom) / std::max(yto, yfrom))) * 20 -
+                     b) <= 40) {
+          return {1, x->id(), d.first->id()};
+        }
+
+        if (Geometry::DistanceToSegment(d.first->vertice(), x->vertice(),
+                                        clicked) <= 10) {
           if ((std::find(selected_edges_.begin(), selected_edges_.end(),
-                         std::pair<Vertex *, Vertex *>{d, x}) ==
+                         std::pair<Vertex *, Vertex *>{d.first, x}) ==
                selected_edges_.end()) &&
               (std::find(selected_edges_.begin(), selected_edges_.end(),
-                         std::pair<Vertex *, Vertex *>{x, d}) ==
+                         std::pair<Vertex *, Vertex *>{x, d.first}) ==
                selected_edges_.end())) {
-            selected_edges_.push_back({d, x});
-            selected_edges_.push_back({x, d});
+            selected_edges_.push_back({d.first, x});
+            selected_edges_.push_back({x, d.first});
           } else {
             selected_edges_.erase(
                 std::find(selected_edges_.begin(), selected_edges_.end(),
-                          std::pair<Vertex *, Vertex *>{d, x}));
+                          std::pair<Vertex *, Vertex *>{d.first, x}));
             selected_edges_.erase(
                 std::find(selected_edges_.begin(), selected_edges_.end(),
-                          std::pair<Vertex *, Vertex *>{x, d}));
+                          std::pair<Vertex *, Vertex *>{x, d.first}));
           }
-          return;
+          return {0, 0, 0};
         }
       }
     }
     auto a = new Vertex(adjacency_list_.size() + 1, clicked, false, {});
     this->adjacency_list_.push_back(a);
+    return {0, 0, 0};
   }
 }
 bool Logic::HandlingSubfunc(Vertice clicked) {
@@ -89,7 +105,9 @@ void Logic::HandleDelete() {
     for (const auto &t : adjacency_list_) {
       t->connected_.erase(
           std::remove_if(t->connected_.begin(), t->connected_.end(),
-                         [&](Vertex *el) { return el->id() == d->id(); }),
+                         [&](std::pair<Vertex *, int> el) {
+                           return el.first->id() == d->id();
+                         }),
           t->connected_.end());
     }
     delete d;
@@ -100,15 +118,12 @@ void Logic::HandleDelete() {
 void Logic::HandleDeleteEdge() {
   std::for_each(selected_edges_.begin(), selected_edges_.end(),
                 [](std::pair<Vertex *, Vertex *> el) {
-                  auto a = std::find(el.first->connected_.begin(),
-                                     el.first->connected_.end(), el.second);
-                  //                  for (auto a =
-                  //                  el.first->connected_.begin();
-                  //                       a != el->connected_.end(); a++) {
-                  //                    if (a->first == el.second) {
-                  //                      el->connected_.erase(a);
-                  //                    }
-                  //                  }
+                  auto a = std::find_if(el.first->connected_.begin(),
+                                        el.first->connected_.end(),
+                                        [&](std::pair<Vertex *, int> search) {
+                                          return (el.second == search.first);
+                                        });
+
                   if (a != el.first->connected_.end()) {
                     el.first->connected_.erase(a);
                   }
@@ -133,14 +148,18 @@ bool Logic::HandleConnection() {
     selected_.clear();
     return false;
   } else {
-    if ((std::find(selected_[0]->connected_.begin(),
-                   selected_[0]->connected_.end(),
-                   selected_[1]) == selected_[0]->connected_.end()) &&
-        (std::find(selected_[1]->connected_.begin(),
-                   selected_[1]->connected_.end(),
-                   selected_[0]) == selected_[1]->connected_.end())) {
-      selected_[0]->connected_.push_back(selected_[1]);
-      selected_[1]->connected_.push_back(selected_[0]);
+    auto &from_edges = selected_[0]->connected_;
+    auto &to_edges = selected_[1]->connected_;
+    if (std::find_if(from_edges.begin(), from_edges.end(),
+                     [&](std::pair<Vertex *, int> search) {
+                       return selected_[1] == search.first;
+                     }) == from_edges.end() &&
+        std::find_if(to_edges.begin(), to_edges.end(),
+                     [&](std::pair<Vertex *, int> search) {
+                       return selected_[0] == search.first;
+                     }) == to_edges.end()) {
+      from_edges.push_back({selected_[1], 1});
+      to_edges.push_back({selected_[0], 1});
       for (const auto &x : selected_) x->SetActive(false);
       selected_.clear();
       return true;
@@ -152,33 +171,44 @@ bool Logic::HandleConnection() {
   }
 }
 
-std::vector<QVector4D> Logic::DrawVerticesAPI() {
-  std::vector<QVector4D> to_draw;
+std::vector<QMatrix4x4> Logic::DrawVerticesAPI() {
+  std::vector<QMatrix4x4> to_draw;
   for (const auto &x : adjacency_list()) {
-    to_draw.push_back(QVector4D{static_cast<float>(x->id()),
-                                static_cast<float>(x->is_active_),
-                                static_cast<float>(x->vertice().x()),
-                                static_cast<float>(x->vertice().y())});
+    to_draw.push_back(QMatrix4x4(
+        static_cast<float>(x->id()), static_cast<float>(x->is_active_),
+        static_cast<float>(x->vertice().x()),
+        static_cast<float>(x->vertice().y()), .0f, .0f, .0f, .0f, .0f, .0f, .0f,
+        .0f, .0f, .0f, .0f, .0f));
   }
   return to_draw;
 }
 
-std::vector<QVector4D> Logic::DrawEdgesAPI() {
-  std::vector<QVector4D> to_draw;
+std::vector<QMatrix4x4> Logic::DrawEdgesAPI() {
+  std::vector<QMatrix4x4> to_draw;
   for (const auto &x : adjacency_list_) {
     for (const auto &y : x->connected()) {
-      if (std::find(selected_edges_.begin(), selected_edges_.end(),
-                    std::pair<Vertex *, Vertex *>{x, y}) !=
-          selected_edges_.end()) {
-        to_draw.push_back(QVector4D{static_cast<float>(-x->vertice().x()),
-                                    static_cast<float>(-x->vertice().y()),
-                                    static_cast<float>(-y->vertice().x()),
-                                    static_cast<float>(-y->vertice().y())});
+      if (std::find_if(
+              selected_edges_.begin(), selected_edges_.end(),
+
+              [&](std::pair<Vertex *, Vertex *> search) {
+                return ((search == std::pair<Vertex *, Vertex *>{x, y.first}) ||
+                        (search == std::pair<Vertex *, Vertex *>{y.first, x}));
+              }) != selected_edges_.end()) {
+        //              std::pair<Vertex *, Vertex *>{x, y}) !=
+        //              selected_edges_.end()) {
+        to_draw.push_back(
+            QMatrix4x4(static_cast<float>(-x->vertice().x()),
+                       static_cast<float>(-x->vertice().y()),
+                       static_cast<float>(-y.first->vertice().x()),
+                       static_cast<float>(-y.first->vertice().y()), y.second,
+                       .0f, .0f, .0f, .0f, .0f, .0f, .0f, .0f, .0f, .0f, .0f));
       } else {
-        to_draw.push_back(QVector4D{static_cast<float>(x->vertice().x()),
-                                    static_cast<float>(x->vertice().y()),
-                                    static_cast<float>(y->vertice().x()),
-                                    static_cast<float>(y->vertice().y())});
+        to_draw.push_back(QMatrix4x4(static_cast<float>(x->vertice().x()),
+                                     static_cast<float>(x->vertice().y()),
+                                     static_cast<float>(y.first->vertice().x()),
+                                     static_cast<float>(y.first->vertice().y()),
+                                     y.second, .0f, .0f, .0f, .0f, .0f, .0f,
+                                     .0f, .0f, .0f, .0f, .0f));
       }
     }
   }
@@ -199,9 +229,14 @@ void Logic::Serialize(QString filepath) {
              << el->vertice_.y() << '}' << ',' << '{';
         if (!el->connected_.empty()) {
           std::for_each(el->connected_.begin(), el->connected_.end() - 1,
-                        [&](Vertex *el) { file << el->id() - 1 << ','; });
-          file << el->connected_[el->connected_.size() - 1]->id() - 1 << '}'
-               << '}' << ',';
+                        [&](std::pair<Vertex *, int> el) {
+                          file << '{' << el.first->id() - 1 << ',' << el.second
+                               << '}' << ',';
+                        });
+          file << '{'
+               << el->connected_[el->connected_.size() - 1].first->id() - 1
+               << ',' << el->connected_[el->connected_.size() - 1].second << '}'
+               << '}' << '}' << ',';
         } else {
           file << "}},";
         }
@@ -212,8 +247,13 @@ void Logic::Serialize(QString filepath) {
        << el->vertice_.y() << '}' << ',' << '{';
   if (el->connected_.size() != 0) {
     std::for_each(el->connected_.begin(), el->connected_.end() - 1,
-                  [&](Vertex *el) { file << el->id() - 1 << ','; });
-    file << el->connected_[el->connected_.size() - 1]->id() - 1 << '}';
+                  [&](std::pair<Vertex *, int> el) {
+                    file << '{' << el.first->id() - 1 << ',' << el.second << '}'
+                         << ',';
+                  });
+    file << '{' << '{'
+         << el->connected_[el->connected_.size() - 1].first->id() - 1 << ','
+         << el->connected_[el->connected_.size() - 1].second << '}' << '}';
   } else {
     file << "}}";
   }
@@ -223,6 +263,7 @@ void Logic::Serialize(QString filepath) {
 // ERROR WHILE SEEKING EMPTY VECTOR TO BE FIXED fixed ez
 void Logic::Deserialize(QString filepath) {
   HandleDeleteAll();
+  /*
   std::ifstream file;
   std::vector<std::vector<int>> constructed;
   file.open(filepath.toStdString(), std::ios::in);
@@ -241,7 +282,7 @@ void Logic::Deserialize(QString filepath) {
         id + 1,
         Vertice{x, y},
         false,
-        std::vector<Vertex *>{},
+        std::vector<std::pair<Vertex *, int>>{},
     };
     util::ReadFileData(file, 2);
     adjacency_list_.push_back(to_push);
@@ -257,6 +298,7 @@ void Logic::Deserialize(QString filepath) {
     }
   }
   file.close();
+  */
 }
 
 void Logic::SetIDByCoords(int x, int y) {
@@ -285,16 +327,17 @@ std::vector<Vertex *> Logic::CopyGraph() {
         x->id(),
         x->vertice(),
         false,
-        std::vector<Vertex *>{},
+        std::vector<std::pair<Vertex *, int>>{},
     };
     to_destroy.push_back(to_push);
   });
   for (int i = 0; i < adjacency_list_.size(); i++) {
-    std::for_each(
-        adjacency_list_[i]->connected_.begin(),
-        adjacency_list_[i]->connected_.end(), [&](Vertex *x) {
-          to_destroy[i]->connected_.push_back(to_destroy[x->id() - 1]);
-        });
+    std::for_each(adjacency_list_[i]->connected_.begin(),
+                  adjacency_list_[i]->connected_.end(),
+                  [&](std::pair<Vertex *, int> x) {
+                    to_destroy[i]->connected_.push_back(
+                        {to_destroy[x.first->id() - 1], x.second});
+                  });
   }
   return to_destroy;
 }
@@ -311,7 +354,7 @@ void Logic::DFS(int s) {
       visited[s - 1] = true;
     }
     for (const auto &x : adjacency_list_[s - 1]->connected_)
-      if (!visited[x->id()]) stack.push(x->id());
+      if (!visited[x.first->id()]) stack.push(x.first->id());
   }
 }
 
@@ -343,10 +386,10 @@ void Logic::EulersPath(std::vector<Vertex *> tmp_adjacency) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     if (!from->connected_.empty()) {
       stack.push(from->id_);
-      auto to = adjacency_list_[s]->connected_[0];
+      auto to = adjacency_list_[s]->connected_[0].first;
       from->connected_.erase(from->connected_.begin());
       for (auto it = to->connected_.begin(); it != to->connected_.end(); it++) {
-        if ((*it)->id() == from->id()) {
+        if ((*it).first->id() == from->id()) {
           to->connected_.erase(it);
           break;
         }
@@ -403,8 +446,8 @@ std::vector<int> Logic::DjikstraAlgo(int source, int to) {
     int source = top.second;
 
     for (auto &x : adjacency_list_[source]->connected_) {
-      int adj_node = x->id() - 1;
-      int path_adjnode = 1;
+      int adj_node = x.first->id() - 1;
+      int path_adjnode = x.second;
 
       if (dist[adj_node] > path_adjnode + dist[source]) {
         parents[adj_node] = source;
@@ -458,6 +501,68 @@ bool Logic::DjikstraAPI() {
     return false;
   }
   selected_.clear();
+}
+
+void Logic::KruskalAlgo() {
+  std::vector<std::vector<int>> prices(
+      adjacency_list_.size(), std::vector<int>(adjacency_list_.size(), 0));
+  std::vector<std::pair<int, std::pair<int, int>>> g;
+  for (const auto &x : adjacency_list_) {
+    for (const auto &y : x->connected_) {
+      prices[x->id_ - 1][y.first->id_ - 1] = y.second;
+      prices[y.first->id_ - 1][x->id_ - 1] = y.second;
+      g.push_back({y.second, {x->id() - 1, y.first->id() - 1}});
+    }
+  }
+  int cost = 0;
+  std::vector<std::pair<int, int>> res;
+  std::sort(g.begin(), g.end());
+  std::vector<int> tree_id(adjacency_list_.size());
+  for (int i = 0; i < adjacency_list_.size(); ++i) tree_id[i] = i;
+  for (int i = 0; i < g.size(); ++i) {
+    int a = g[i].second.first, b = g[i].second.second, l = g[i].first;
+    if (tree_id[a] != tree_id[b]) {
+      cost += l;
+      res.push_back(std::make_pair(a, b));
+      int old_id = tree_id[b], new_id = tree_id[a];
+      for (int j = 0; j < adjacency_list_.size(); ++j)
+        if (tree_id[j] == old_id) tree_id[j] = new_id;
+    }
+  }
+
+  for (auto &x : adjacency_list_) {
+    x->SetActive(false);
+  }
+
+  for (auto &x : adjacency_list_) {
+    x->connected_.clear();
+  }
+
+  selected_.clear();
+
+  for (int i = 0; i < res.size(); i++) {
+    selected_.push_back(adjacency_list_[res[i].first]);
+    selected_.push_back(adjacency_list_[res[i].second]);
+    HandleConnection();
+    ChangePrice(res[i].first + 1, res[i].second + 1,
+                prices[res[i].first][res[i].second]);
+
+    //    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  }
+  qDebug() << res;
+}
+
+void Logic::ChangePrice(int from, int to, int price) {
+  for (auto &x : adjacency_list_[from - 1]->connected_) {
+    if (x.first->id() == to) {
+      x.second = price;
+    }
+  }
+  for (auto &x : adjacency_list_[to - 1]->connected_) {
+    if (x.first->id() == from) {
+      x.second = price;
+    }
+  }
 }
 
 /* 				Style of Serializing

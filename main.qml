@@ -1,3 +1,4 @@
+// clang-format off
 import QtQuick 2.15
 import QtQuick.Dialogs 1.3
 import QtQuick.Window 2.2
@@ -111,6 +112,14 @@ ApplicationWindow {
                     delay(500, graph.requestPaint)
                 }
             }
+            Action {
+                text: qsTr("&Kruskal Algo")
+                onTriggered: {
+                    logic.KruskalAlgo()
+
+                    graph.requestPaint()
+                }
+            }
         }
         Menu {
             title: qsTr("&Help")
@@ -118,6 +127,10 @@ ApplicationWindow {
                 text: qsTr("&About")
                 onTriggered: showMessageBox(
                                  'Created by Artem Siryk!\nPress C to connect 2 selected Vertices\nPress D to delete Vertices\nPress E to delete Edges\nRead Algorithms section for more info')
+            }
+            Action {
+                text: qsTr("&Test")
+                onTriggered: showInputBox('Ssanina')
             }
         }
     }
@@ -132,6 +145,17 @@ ApplicationWindow {
             visible: false
         }
     }
+    Item {
+        anchors.centerIn: parent
+        width: priceDialog.width
+        height: priceDialog.height
+        PriceDialog {
+            id: priceDialog
+            title: qsTr("Input Price")
+            visible: false
+        }
+    }
+
     Canvas {
         id: graph
         width: parent.width
@@ -160,7 +184,14 @@ ApplicationWindow {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton
             onClicked: {
-                logic.HandleClick(mouse.x, mouse.y)
+                let r = logic.HandleClick(mouse.x, mouse.y)
+                if (r.x == 1) {
+                    PriceDialog.from = r.y
+                    priceDialog.from = r.y
+                    PriceDialog.to = r.z
+                    priceDialog.to = r.z
+                    showInputBox("")
+                }
 
                 graph.requestPaint()
             }
@@ -201,7 +232,7 @@ ApplicationWindow {
             ctx.fillText(id, (x - id.toString().length * 10), y + 10)
             graph.requestPaint()
         }
-        function drawEdges(xfrom, yfrom, xto, yto) {
+        function drawEdges(xfrom, yfrom, xto, yto, price) {
             let ctx = graph.getContext("2d")
             ctx.lineWidth = 3
             if (xfrom <= 0) {
@@ -213,23 +244,34 @@ ApplicationWindow {
             } else {
                 ctx.strokeStyle = "#17A589"
             }
+
             ctx.beginPath()
             ctx.moveTo(xfrom, yfrom)
             ctx.lineTo(xto, yto)
             ctx.closePath()
+
+            ctx.fillStyle = "#F4D03F"
+            ctx.font = "25px Verdana"
+            ctx.fillText(
+                        price, ((xfrom + xto) / 2) + ((Math.min(yto,
+                                                                yfrom) / Math.max(
+                                                           yto, yfrom))) * 20, ((yfrom + yto) / 2)
+                        + ((1 - (Math.min(yto, yfrom) / Math.max(yto,
+                                                                 yfrom)))) * 20)
+
             ctx.stroke()
         }
 
         onPaint: {
             let ctx = graph.getContext("2d")
             ctx.clearRect(0, 0, parent.width, parent.height)
-            let to_draw_edges = logic.DrawEdgesAPI()
-            to_draw_edges.forEach(function (element) {
-                drawEdges(element.x, element.y, element.z, element.w)
+
+            logic.DrawEdgesAPI().forEach(function (element) {
+                drawEdges(element.m11, element.m12, element.m13, element.m14,
+                          element.m21)
             })
-            let to_draw_vertices = logic.DrawVerticesAPI()
-            to_draw_vertices.forEach(function (element) {
-                drawCircle(element.x, element.y, element.z, element.w)
+            logic.DrawVerticesAPI().forEach(function (element) {
+                drawCircle(element.m11, element.m12, element.m13, element.m14)
             })
         }
         TapHandler {
@@ -244,4 +286,8 @@ ApplicationWindow {
         msgDialog.text = message
         msgDialog.visible = true
     }
-}
+    function showInputBox(message) {
+        priceDialog.visible = true
+        console.log(PriceDialog.ready)
+    }
+} // clang-format on

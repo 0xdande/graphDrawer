@@ -45,7 +45,8 @@ class Logic : public QObject {
   Q_INVOKABLE void SetIDByCoords(int x, int y);
   Q_INVOKABLE void ChangePrice(int from, int to, int price);
 
-  void DFS(int s);
+  void DFS(int v, int p, int timer, std::vector<int> &tin,
+           std::vector<int> &fup);
   std::vector<Vertex *> CopyGraph();
 
   /// Drawing API
@@ -66,11 +67,17 @@ class Logic : public QObject {
   Q_INVOKABLE bool DjikstraAPI();
 
   /// Kruskals Algo
-  Q_INVOKABLE void KruskalAlgo();
+  void KruskalAlgo();
+  Q_INVOKABLE void KruskalAPI();
+
+  // Bridges Search
+  void BridgeSearch();
+  Q_INVOKABLE void BridgesAPI();
 
  private:
   std::vector<Vertex *> adjacency_list_;
   std::vector<Vertex *> selected_;
+  std::vector<bool> used;
   std::vector<std::pair<Vertex *, Vertex *>> selected_edges_;
   uint8_t vertice_radius_ = 30;
   uint8_t last_hold = 0;

@@ -115,8 +115,16 @@ ApplicationWindow {
             Action {
                 text: qsTr("&Kruskal Algo")
                 onTriggered: {
-                    logic.KruskalAlgo()
-
+                    logic.KruskalAPI()
+                    delay(500, graph.requestPaint)
+                    graph.requestPaint()
+                }
+            }
+            Action {
+                text: qsTr("&Bridges Search")
+                onTriggered: {
+                    logic.BridgesAPI()
+                    delay(500, graph.requestPaint)
                     graph.requestPaint()
                 }
             }
@@ -127,10 +135,6 @@ ApplicationWindow {
                 text: qsTr("&About")
                 onTriggered: showMessageBox(
                                  'Created by Artem Siryk!\nPress C to connect 2 selected Vertices\nPress D to delete Vertices\nPress E to delete Edges\nRead Algorithms section for more info')
-            }
-            Action {
-                text: qsTr("&Test")
-                onTriggered: showInputBox('Ssanina')
             }
         }
     }

@@ -342,19 +342,26 @@ std::vector<Vertex *> Logic::CopyGraph() {
   return to_destroy;
 }
 
-void Logic::DFS(int s) {
-  std::vector<bool> visited(adjacency_list_.size() + 1, false);
-  std::stack<int> stack;
-  stack.push(s);
-
-  while (!stack.empty()) {
-    s = stack.top();
-    stack.pop();
-    if (!visited[s - 1]) {
-      visited[s - 1] = true;
+void Logic::DFS(int v, int p, int timer, std::vector<int> &tin,
+                std::vector<int> &fup) {
+  used[v] = true;
+  tin[v] = fup[v] = timer++;
+  for (size_t i = 0; i < adjacency_list_[v]->connected_.size(); ++i) {
+    int to = adjacency_list_[v]->connected_[i].first->id_ - 1;
+    if (to == p) continue;
+    if (used[to])
+      fup[v] = std::min(fup[v], tin[to]);
+    else {
+      DFS(to, v, timer, tin, fup);
+      fup[v] = std::min(fup[v], fup[to]);
+      if (fup[to] > tin[v]) {
+        qDebug() << "Bridge:" << v << ' ' << to;
+        selected_edges_.push_back({adjacency_list_[v], adjacency_list_[to]});
+        selected_edges_.push_back({adjacency_list_[to], adjacency_list_[v]});
+      }
     }
-    for (const auto &x : adjacency_list_[s - 1]->connected_)
-      if (!visited[x.first->id()]) stack.push(x.first->id());
+    qDebug() << tin;
+    qDebug() << fup;
   }
 }
 
@@ -517,6 +524,7 @@ void Logic::KruskalAlgo() {
   int cost = 0;
   std::vector<std::pair<int, int>> res;
   std::sort(g.begin(), g.end());
+  qDebug() << g;
   std::vector<int> tree_id(adjacency_list_.size());
   for (int i = 0; i < adjacency_list_.size(); ++i) tree_id[i] = i;
   for (int i = 0; i < g.size(); ++i) {
@@ -543,13 +551,18 @@ void Logic::KruskalAlgo() {
   for (int i = 0; i < res.size(); i++) {
     selected_.push_back(adjacency_list_[res[i].first]);
     selected_.push_back(adjacency_list_[res[i].second]);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     HandleConnection();
     ChangePrice(res[i].first + 1, res[i].second + 1,
                 prices[res[i].first][res[i].second]);
-
-    //    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
   qDebug() << res;
+}
+
+void Logic::KruskalAPI() {
+  std::thread a(&Logic::KruskalAlgo, this);
+  a.detach();
+  return;
 }
 
 void Logic::ChangePrice(int from, int to, int price) {
@@ -564,7 +577,16 @@ void Logic::ChangePrice(int from, int to, int price) {
     }
   }
 }
-
+void Logic::BridgeSearch() {
+  used.resize(adjacency_list_.size() + 1);
+  for (int i = 0; i < used.size(); i++) used[i] = false;
+  int timer = 0;
+  std::vector<int> tin(adjacency_list_.size());
+  std::vector<int> fup(adjacency_list_.size());
+  for (int i = 0; i < adjacency_list_.size(); ++i)
+    if (!used[i]) DFS(i, -1, timer, tin, fup);
+}
+void Logic::BridgesAPI() { BridgeSearch(); }
 /* 				Style of Serializing
  * {{id,{x,y},is_active,{id.'s of connected}},{id,{x,y},is_active,
  * {id.'s of connected}}...}
